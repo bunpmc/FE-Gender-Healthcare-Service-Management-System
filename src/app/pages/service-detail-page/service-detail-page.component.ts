@@ -5,7 +5,7 @@ import { FooterComponent } from '../../components/footer/footer.component';
 import { HeaderComponent } from '../../components/header/header.component';
 import { MedicalService } from '../../services/medical.service';
 import { BreadcrumbsComponent } from '../../components/breadcrumbs/breadcrumbs.component';
-import { BreadcrumbService } from '../../services/Breadcrumb.service';
+import { BreadcrumbService } from '../../services/breadcrumb.service';
 import { ServiceDetail } from '../../models/service.model';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 

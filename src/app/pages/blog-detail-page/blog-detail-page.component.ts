@@ -6,7 +6,7 @@ import { HeaderComponent } from '../../components/header/header.component';
 import { FooterComponent } from '../../components/footer/footer.component';
 import { BlogDetail } from '../../models/blog.model';
 import { BreadcrumbsComponent } from '../../components/breadcrumbs/breadcrumbs.component';
-import { BreadcrumbService } from '../../services/Breadcrumb.service';
+import { BreadcrumbService } from '../../services/breadcrumb.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({

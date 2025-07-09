@@ -7,7 +7,7 @@ import { FooterComponent } from '../../components/footer/footer.component';
 import { BlogService } from '../../services/blog.service';
 import { Blog, BlogDisplay } from '../../models/blog.model';
 import { BreadcrumbsComponent } from '../../components/breadcrumbs/breadcrumbs.component';
-import { BreadcrumbService } from '../../services/Breadcrumb.service';
+import { BreadcrumbService } from '../../services/breadcrumb.service';
 
 @Component({
   selector: 'app-blogs-page',

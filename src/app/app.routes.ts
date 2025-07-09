@@ -17,6 +17,7 @@ import { ServiceDetailComponent } from './pages/service-detail-page/service-deta
 import { Transaction } from './pages/transaction-page/transaction-page';
 import { CartComponent } from './components/cart/cart.component';
 import { PaymentResultComponent } from './pages/payment-result-page/payment-result-page.component';
+import { DashboardComponent } from './pages/dashboard-page/dashboard-page.component';
 
 export const routes: Routes = [
   { path: '', component: HomePageComponent, data: { breadcrumb: 'Home' } },
@@ -28,6 +29,10 @@ export const routes: Routes = [
   {
     path: 'register',
     component: RegisterComponent,
+  },
+  {
+    path: 'dashboard',
+    component: DashboardComponent,
   },
   {
     path: 'appointment',

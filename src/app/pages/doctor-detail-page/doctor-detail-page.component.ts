@@ -7,7 +7,7 @@ import { FooterComponent } from '../../components/footer/footer.component';
 import { DatePipe, NgClass, UpperCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BreadcrumbsComponent } from '../../components/breadcrumbs/breadcrumbs.component';
-import { BreadcrumbService } from '../../services/Breadcrumb.service';
+import { BreadcrumbService } from '../../services/breadcrumb.service';
 import { Subscription } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
