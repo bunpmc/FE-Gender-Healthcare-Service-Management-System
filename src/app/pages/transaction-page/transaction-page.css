@@ -1,9 +1,20 @@
+/* Background styling similar to homepage */
+.transaction-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
 .transaction-container {
   max-width: 7xl;
   margin: 0 auto;
   padding: 2.5rem 1.5rem;
-  background: #f8f8f8;
-  min-height: 80vh;
+  min-height: 100vh;
+  position: relative;
+  z-index: 10;
 }
 
 .transaction-header {
@@ -12,8 +23,11 @@
   padding: 3rem 2rem;
   background: linear-gradient(135deg, #222e5c 0%, #47b1e2 100%);
   color: white;
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(34, 46, 92, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 12px 40px rgba(34, 46, 92, 0.3);
+  position: relative;
+  z-index: 3;
+  backdrop-filter: blur(10px);
 }
 
 .page-title {
@@ -36,15 +50,21 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
+  position: relative;
+  z-index: 2;
 }
 
 /* Order Summary */
 .order-summary {
-  background: #fff;
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
   padding: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   height: fit-content;
+  position: relative;
+  z-index: 3;
 }
 
 .section-title {
@@ -67,11 +87,19 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  padding: 1.5rem;
+  border: 1px solid rgba(224, 224, 224, 0.3);
+  border-radius: 16px;
   margin-bottom: 1rem;
-  background: #fafafa;
+  background: rgba(250, 250, 250, 0.8);
+  backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+}
+
+.order-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border-color: rgba(71, 177, 226, 0.3);
 }
 
 .item-image {
@@ -138,10 +166,14 @@
 
 /* Customer Information */
 .customer-info {
-  background: #fff;
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
   padding: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  z-index: 3;
 }
 
 .customer-form {
@@ -188,10 +220,12 @@
 
 /* Payment Method */
 .payment-method {
-  background: #f8f9fa;
+  background: rgba(248, 249, 250, 0.8);
+  backdrop-filter: blur(5px);
   padding: 1.5rem;
-  border-radius: 8px;
+  border-radius: 16px;
   margin-bottom: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .payment-title {
@@ -208,10 +242,18 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1rem;
-  background: white;
-  border-radius: 8px;
-  border: 2px solid #e0e0e0;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(5px);
+  border-radius: 12px;
+  border: 2px solid rgba(71, 177, 226, 0.2);
+  transition: all 0.3s ease;
+}
+
+.vnpay-info:hover {
+  border-color: rgba(71, 177, 226, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(71, 177, 226, 0.1);
 }
 
 .vnpay-logo {
@@ -281,8 +323,38 @@
   background: #545b62;
 }
 
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.order-summary,
+.customer-info {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.transaction-header {
+  animation: fadeInUp 0.4s ease-out;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
+  .transaction-container {
+    padding: 1rem;
+    min-height: 100vh;
+  }
+
+  .transaction-container::after {
+    display: none; /* Hide decorative elements on mobile */
+  }
+
   .transaction-content {
     grid-template-columns: 1fr;
     gap: 1rem;
@@ -290,7 +362,7 @@
 
   .transaction-header {
     margin-bottom: 2rem;
-    padding: 1.5rem;
+    padding: 2rem 1.5rem;
   }
 
   .page-title {
@@ -300,6 +372,7 @@
   .order-summary,
   .customer-info {
     padding: 1.5rem;
+    border-radius: 16px;
   }
 
   .form-actions {
@@ -310,10 +383,17 @@
     flex-direction: column;
     text-align: center;
     gap: 0.5rem;
+    padding: 1rem;
   }
 
   .item-meta {
     justify-content: center;
     gap: 1rem;
+  }
+
+  .vnpay-info {
+    flex-direction: column;
+    text-align: center;
+    padding: 1rem;
   }
 }

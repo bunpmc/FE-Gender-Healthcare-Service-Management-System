@@ -44,7 +44,7 @@ export class VnpayService {
     });
   }
 
-  // Verify VNPay callback
+  // Verify VNPay callback - calls your callback edge function to update database
   verifyCallback(callbackData: VNPayCallbackData): Observable<PaymentResult> {
     return this.http.post<PaymentResult>(this.vnpayCallbackUrl, callbackData, {
       headers: this.getHeaders(),

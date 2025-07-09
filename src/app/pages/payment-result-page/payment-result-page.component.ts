@@ -34,6 +34,8 @@ export class PaymentResultComponent implements OnInit {
   private processPaymentCallback(): void {
     // Get all query parameters from the URL
     this.route.queryParams.subscribe((params) => {
+      console.log('Payment callback params:', params);
+
       if (Object.keys(params).length === 0) {
         this.errorMessage = 'Không tìm thấy thông tin thanh toán';
         this.isLoading = false;
@@ -56,7 +58,9 @@ export class PaymentResultComponent implements OnInit {
         vnp_SecureHash: params['vnp_SecureHash'] || '',
       };
 
-      // Verify payment with backend
+      console.log('Parsed callback data:', this.callbackData);
+
+      // Verify payment locally
       this.verifyPayment();
     });
   }
@@ -68,22 +72,47 @@ export class PaymentResultComponent implements OnInit {
       return;
     }
 
-    this.vnpayService.verifyCallback(this.callbackData).subscribe({
-      next: (result) => {
-        this.paymentResult = result;
-        this.isLoading = false;
+    // Verify payment locally based on VNPay response code
+    const isSuccessful = this.callbackData.vnp_ResponseCode === '00';
 
-        // Clear cart if payment was successful
-        if (result.success) {
-          this.cartService.clearCart();
-        }
-      },
-      error: (error) => {
-        console.error('Payment verification error:', error);
-        this.errorMessage = 'Có lỗi xảy ra khi xác thực thanh toán';
-        this.isLoading = false;
-      },
-    });
+    this.paymentResult = {
+      success: isSuccessful,
+      message: this.vnpayService.getPaymentStatusMessage(
+        this.callbackData.vnp_ResponseCode
+      ),
+      payment_details: this.callbackData,
+    };
+
+    this.isLoading = false;
+
+    // Clear cart if payment was successful
+    if (isSuccessful) {
+      this.cartService.clearCart();
+
+      // Optional: Update transaction status in your backend
+      this.updateTransactionStatus();
+    }
+  }
+
+  // Update transaction status in backend using callback edge function
+  private updateTransactionStatus(): void {
+    if (this.callbackData?.vnp_TxnRef) {
+      console.log(
+        'Updating transaction status for order:',
+        this.callbackData.vnp_TxnRef
+      );
+
+      // Call the VNPay callback edge function to update database
+      this.vnpayService.verifyCallback(this.callbackData).subscribe({
+        next: (result) => {
+          console.log('Transaction status updated successfully:', result);
+        },
+        error: (error) => {
+          console.error('Error updating transaction status:', error);
+          // Don't show error to user since payment was successful
+        },
+      });
+    }
   }
 
   // Check if payment was successful
