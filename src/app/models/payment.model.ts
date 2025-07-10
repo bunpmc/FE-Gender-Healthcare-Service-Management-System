@@ -21,6 +21,7 @@ export interface VNPayPaymentRequest {
   orderInfo: string;
   patientId?: string;
   services?: CartItem[];
+  orderType?: string 
 }
 
 export interface VNPayPaymentResponse {

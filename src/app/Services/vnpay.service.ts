@@ -14,10 +14,8 @@ import {
   providedIn: 'root',
 })
 export class VnpayService {
-  private readonly vnpayPaymentUrl =
-    'https://xzxxodxplyetecrsbxmc.supabase.co/functions/v1/vnpay-payment';
-  private readonly vnpayCallbackUrl =
-    'https://xzxxodxplyetecrsbxmc.supabase.co/functions/v1/vnpay-callback';
+  private readonly vnpayPaymentUrl = `${environment.apiEndpoint}/vnpay-payment`;
+  private readonly vnpayCallbackUrl = `${environment.apiEndpoint}/vnpay-callback`;
 
   constructor(private http: HttpClient) {}
 
@@ -25,6 +23,7 @@ export class VnpayService {
   private getHeaders(): HttpHeaders {
     return new HttpHeaders({
       'Content-Type': 'application/json',
+      Authorization: `Bearer ${environment.authorization}`,
     });
   }
 
@@ -35,8 +34,8 @@ export class VnpayService {
     const payload = {
       amount: paymentRequest.amount,
       orderInfo: paymentRequest.orderInfo,
-      patientId: paymentRequest.patientId,
-      services: paymentRequest.services,
+      customerPhone: paymentRequest.patientId,
+      orderType: paymentRequest.orderType || 'billpayment',
     };
 
     return this.http.post<VNPayPaymentResponse>(this.vnpayPaymentUrl, payload, {
@@ -44,7 +43,7 @@ export class VnpayService {
     });
   }
 
-  // Verify VNPay callback - calls your callback edge function to update database
+  // Verify VNPay callback
   verifyCallback(callbackData: VNPayCallbackData): Observable<PaymentResult> {
     return this.http.post<PaymentResult>(this.vnpayCallbackUrl, callbackData, {
       headers: this.getHeaders(),

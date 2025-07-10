@@ -15,7 +15,10 @@ export interface Patient {
   past_surgeries?: {
     surgeries?: string[];
   } | null;
-  vaccination_status: 'not_vaccinated' | 'partially_vaccinated' | 'fully_vaccinated';
+  vaccination_status:
+    | 'not_vaccinated'
+    | 'partially_vaccinated'
+    | 'fully_vaccinated';
   patient_status: 'active' | 'inactive';
   created_at?: string;
   updated_at?: string;
@@ -35,4 +38,29 @@ export interface DashboardPatient {
   lastVisit?: string;
   upcomingAppointments?: number;
   image_link?: string | null;
+  nextAppointment?: UpcomingAppointment | null;
+  recentAppointments?: RecentAppointment[];
+}
+
+// Upcoming appointment interface for patient dashboard
+export interface UpcomingAppointment {
+  appointment_id: string;
+  appointment_date: string;
+  appointment_time: string;
+  doctor_name?: string;
+  visit_type: 'virtual' | 'internal' | 'external' | 'consultation';
+  appointment_status: 'pending' | 'cancelled' | 'completed';
+  days_until: number;
+  time_until: string; // e.g., "2 days, 3 hours"
+}
+
+// Recent appointment interface for patient history
+export interface RecentAppointment {
+  appointment_id: string;
+  appointment_date: string;
+  appointment_time: string;
+  doctor_name?: string;
+  visit_type: 'virtual' | 'internal' | 'external' | 'consultation';
+  appointment_status: 'pending' | 'cancelled' | 'completed';
+  days_ago: number;
 }

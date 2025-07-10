@@ -70,11 +70,20 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   getUserInfo() {
-    this.authService.getUserProfile().subscribe({
-      next: (data: any) => {
-        this.user = data;
+    // Use the current user from auth service instead of calling API
+    this.authService.getCurrentUser$().subscribe({
+      next: (user) => {
+        if (user && user.patient) {
+          this.user = {
+            success: true,
+            data: user.patient,
+          };
+        } else {
+          this.user = null;
+        }
       },
       error: (err: any) => {
+        console.error('Error getting user info:', err);
         this.user = null;
       },
     });

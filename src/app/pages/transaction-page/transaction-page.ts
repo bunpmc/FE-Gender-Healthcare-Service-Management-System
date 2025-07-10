@@ -26,6 +26,7 @@ import {
     FooterComponent,
     // BreadcrumbsComponent,
   ],
+
   templateUrl: './transaction-page.html',
   styleUrl: './transaction-page.css',
 })

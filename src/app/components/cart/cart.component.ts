@@ -11,6 +11,7 @@ import { Cart, CartItem } from '../../models/payment.model';
   selector: 'app-cart',
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule],
+  providers: [CartService],
   templateUrl: './cart.component.html',
   styleUrl: './cart.component.css',
 })

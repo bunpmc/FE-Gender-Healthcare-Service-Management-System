@@ -97,10 +97,7 @@ export class PaymentResultComponent implements OnInit {
   // Update transaction status in backend using callback edge function
   private updateTransactionStatus(): void {
     if (this.callbackData?.vnp_TxnRef) {
-      console.log(
-        'Updating transaction status for order:',
-        this.callbackData.vnp_TxnRef
-      );
+      console.log('Updating transaction status for order:', this.callbackData.vnp_TxnRef);
 
       // Call the VNPay callback edge function to update database
       this.vnpayService.verifyCallback(this.callbackData).subscribe({
@@ -110,7 +107,7 @@ export class PaymentResultComponent implements OnInit {
         error: (error) => {
           console.error('Error updating transaction status:', error);
           // Don't show error to user since payment was successful
-        },
+        }
       });
     }
   }

@@ -1,9 +1,43 @@
+/* Background styling similar to homepage */
+.dashboard-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
 .dashboard-container {
-  background-color: #f6f8fa;
+  background-color: transparent;
   color: #24292f;
   min-height: calc(100vh - 120px);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans",
+    Helvetica, Arial, sans-serif;
   margin-top: 0;
+  position: relative;
+  z-index: 10;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dashboard-sidebar,
+.dashboard-main {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.dashboard-avatar {
+  animation: fadeInUp 0.4s ease-out;
 }
 
 /* Loading State Styles */
@@ -14,6 +48,13 @@
   justify-content: center;
   min-height: 400px;
   padding: 40px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(15px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 15;
 }
 
 .loading-spinner {
@@ -27,8 +68,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-text {
@@ -46,6 +91,13 @@
   min-height: 400px;
   padding: 40px;
   text-align: center;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(15px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 15;
 }
 
 .error-icon {
@@ -663,6 +715,7 @@ button:disabled {
   padding: 32px 24px;
   gap: 24px;
   position: relative;
+  z-index: 15;
 }
 
 .dashboard-sidebar {
@@ -676,19 +729,39 @@ button:disabled {
   width: 296px;
   height: 296px;
   border-radius: 50%;
-  border: 1px solid #d1d9e0;
+  border: 1px solid rgba(209, 217, 224, 0.3);
   overflow: hidden;
-  background-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .avatar-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.avatar-initials {
+  color: white;
+  font-size: 2.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 /* Avatar Upload Overlay */
@@ -735,6 +808,12 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .dashboard-name {
@@ -867,15 +946,22 @@ button:disabled {
 
 .dashboard-main {
   flex: 1;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(15px);
+  border-radius: 20px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 /* Calendar Section */
 .calendar-section {
-  background-color: #ffffff;
-  border: 1px solid #d1d9e0;
-  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(209, 217, 224, 0.3);
+  border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .calendar-header {
@@ -1065,10 +1151,6 @@ button:disabled {
   color: #f59e0b;
 }
 
-.appointment-status.confirmed {
-  color: #22c55e;
-}
-
 .appointment-status.cancelled {
   color: #ef4444;
 }
@@ -1083,32 +1165,32 @@ button:disabled {
     flex-direction: column;
     gap: 16px;
   }
-  
+
   .dashboard-sidebar {
     flex: none;
     width: 100%;
   }
-  
+
   .dashboard-avatar {
     width: 200px;
     height: 200px;
     margin: 0 auto;
   }
-  
+
   .calendar-header {
     flex-direction: column;
     gap: 16px;
     align-items: stretch;
   }
-  
+
   .calendar-controls {
     justify-content: center;
   }
-  
+
   .calendar-grid {
     font-size: 12px;
   }
-  
+
   .calendar-day {
     min-height: 80px;
   }

@@ -14,6 +14,7 @@ import Aura from '@primeng/themes/aura';
 // 👇 THÊM
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { CartService } from './services/cart.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './i18n/', '.json');
@@ -31,6 +32,7 @@ export const appConfig: ApplicationConfig = {
         preset: Aura,
       },
     }),
+    CartService,
 
     // 👇 THÊM ĐOẠN NÀY (phải nằm trong providers)
     importProvidersFrom(

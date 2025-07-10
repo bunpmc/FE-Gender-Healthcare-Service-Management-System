@@ -7,7 +7,7 @@ export interface Appointment {
   phone: string;
   email: string;
   visit_type: 'virtual' | 'internal' | 'external' | 'consultation';
-  appointment_status?: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  appointment_status?: 'pending' | 'cancelled' | 'completed';
   created_at?: string;
   updated_at?: string;
   schedule: 'Morning' | 'Afternoon' | 'Evening';
@@ -28,7 +28,7 @@ export interface DashboardAppointment {
   type: 'virtual' | 'internal' | 'external' | 'consultation';
   time: string;
   date: string;
-  status?: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  status?: 'pending' | 'cancelled' | 'completed';
   patientName?: string;
   doctorName?: string;
   schedule: 'Morning' | 'Afternoon' | 'Evening';
@@ -51,5 +51,6 @@ export interface DashboardState {
   totalPatients: number;
   totalAppointments: number;
   pendingAppointments: number;
-  confirmedAppointments: number;
+  completedAppointments: number;
+  cancelledAppointments: number;
 }
