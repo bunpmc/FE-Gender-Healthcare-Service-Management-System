@@ -293,5 +293,124 @@
   },
   "BACK_TO_TOP": {
     "TITLE": "Back to Top"
+  },
+  "DASHBOARD": {
+    "TITLE": "Dashboard",
+    "LOADING": "Loading dashboard data...",
+    "TRY_AGAIN": "Try Again",
+    "WELCOME": "Welcome back",
+    "PROFILE": {
+      "TITLE": "Personal Profile",
+      "EDIT": "Edit Profile",
+      "SAVE": "Save Changes",
+      "CANCEL": "Cancel",
+      "FULL_NAME": "Full Name",
+      "EMAIL": "Email",
+      "PHONE": "Phone Number",
+      "DATE_OF_BIRTH": "Date of Birth",
+      "GENDER": "Gender",
+      "BIO": "Bio",
+      "AVATAR": "Avatar",
+      "UPLOAD_AVATAR": "Upload Avatar",
+      "CHANGE_AVATAR": "Change Avatar",
+      "GENDER_OPTIONS": {
+        "MALE": "Male",
+        "FEMALE": "Female",
+        "OTHER": "Other"
+      },
+      "PLACEHOLDERS": {
+        "FULL_NAME": "Enter your full name",
+        "EMAIL": "Enter email address",
+        "PHONE": "Enter phone number",
+        "BIO": "Write a few lines about yourself..."
+      },
+      "ERRORS": {
+        "SAVE_FAILED": "Failed to save profile. Please try again.",
+        "UPLOAD_FAILED": "Failed to upload image. Please try again.",
+        "INVALID_FILE": "Please select a valid image file"
+      },
+      "SUCCESS": {
+        "SAVED": "Profile saved successfully!",
+        "AVATAR_UPLOADED": "Avatar updated successfully!"
+      }
+    },
+    "APPOINTMENTS": {
+      "TITLE": "My Appointments",
+      "UPCOMING": "Upcoming Appointments",
+      "RECENT": "Recent Appointments",
+      "NO_APPOINTMENTS": "You have no appointments yet",
+      "BOOK_NEW": "Book New Appointment",
+      "VIEW_ALL": "View All",
+      "STATUS": {
+        "PENDING": "Pending",
+        "CONFIRMED": "Confirmed",
+        "COMPLETED": "Completed",
+        "CANCELLED": "Cancelled"
+      },
+      "TYPES": {
+        "VIRTUAL": "Virtual Consultation",
+        "INTERNAL": "Internal Medicine",
+        "EXTERNAL": "External Medicine",
+        "CONSULTATION": "Consultation"
+      },
+      "DETAILS": {
+        "DATE": "Date",
+        "TIME": "Time",
+        "DOCTOR": "Doctor",
+        "TYPE": "Type",
+        "STATUS": "Status"
+      }
+    },
+    "CALENDAR": {
+      "TITLE": "Calendar",
+      "TODAY": "Today",
+      "VIEWS": {
+        "MONTH": "Month",
+        "WEEK": "Week",
+        "DAY": "Day"
+      },
+      "MONTHS": {
+        "JAN": "January",
+        "FEB": "February",
+        "MAR": "March",
+        "APR": "April",
+        "MAY": "May",
+        "JUN": "June",
+        "JUL": "July",
+        "AUG": "August",
+        "SEP": "September",
+        "OCT": "October",
+        "NOV": "November",
+        "DEC": "December"
+      },
+      "DAYS": {
+        "SUN": "Sun",
+        "MON": "Mon",
+        "TUE": "Tue",
+        "WED": "Wed",
+        "THU": "Thu",
+        "FRI": "Fri",
+        "SAT": "Sat"
+      },
+      "NAVIGATION": {
+        "PREV": "Previous",
+        "NEXT": "Next",
+        "TODAY": "Today"
+      }
+    },
+    "STATISTICS": {
+      "TITLE": "Statistics",
+      "TOTAL_APPOINTMENTS": "Total Appointments",
+      "PENDING_APPOINTMENTS": "Pending",
+      "COMPLETED_APPOINTMENTS": "Completed",
+      "CANCELLED_APPOINTMENTS": "Cancelled"
+    },
+    "QUICK_ACTIONS": {
+      "TITLE": "Quick Actions",
+      "BOOK_APPOINTMENT": "Book Appointment",
+      "VIEW_MEDICAL_RECORDS": "View Medical Records",
+      "CONTACT_SUPPORT": "Contact Support",
+      "UPDATE_PROFILE": "Update Profile"
+    }
   }
 }

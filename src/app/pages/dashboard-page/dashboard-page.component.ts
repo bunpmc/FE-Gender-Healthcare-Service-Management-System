@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Subject, forkJoin, of } from 'rxjs';
 import { takeUntil, finalize, catchError, timeout, tap } from 'rxjs/operators';
 
@@ -59,7 +59,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Temporary data for editing
   editdashboard = { ...this.dashboard };
 
-  // Dashboard state management
+  // Dashboard state management - Updated to match interface
   dashboardState: DashboardState = {
     isLoading: false,
     error: null,
@@ -81,28 +81,41 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Destroy subject for cleanup
   private destroy$ = new Subject<void>();
 
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private translate: TranslateService
+  ) {}
 
   // Day names for calendar
-  dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+  get dayNames(): string[] {
+    return [
+      this.translate.instant('DASHBOARD.CALENDAR.DAYS.SUN'),
+      this.translate.instant('DASHBOARD.CALENDAR.DAYS.MON'),
+      this.translate.instant('DASHBOARD.CALENDAR.DAYS.TUE'),
+      this.translate.instant('DASHBOARD.CALENDAR.DAYS.WED'),
+      this.translate.instant('DASHBOARD.CALENDAR.DAYS.THU'),
+      this.translate.instant('DASHBOARD.CALENDAR.DAYS.FRI'),
+      this.translate.instant('DASHBOARD.CALENDAR.DAYS.SAT'),
+    ];
+  }
 
   // Current month name
   get currentMonthName(): string {
-    const monthNames = [
-      'Tháng 1',
-      'Tháng 2',
-      'Tháng 3',
-      'Tháng 4',
-      'Tháng 5',
-      'Tháng 6',
-      'Tháng 7',
-      'Tháng 8',
-      'Tháng 9',
-      'Tháng 10',
-      'Tháng 11',
-      'Tháng 12',
+    const monthKeys = [
+      'DASHBOARD.CALENDAR.MONTHS.JAN',
+      'DASHBOARD.CALENDAR.MONTHS.FEB',
+      'DASHBOARD.CALENDAR.MONTHS.MAR',
+      'DASHBOARD.CALENDAR.MONTHS.APR',
+      'DASHBOARD.CALENDAR.MONTHS.MAY',
+      'DASHBOARD.CALENDAR.MONTHS.JUN',
+      'DASHBOARD.CALENDAR.MONTHS.JUL',
+      'DASHBOARD.CALENDAR.MONTHS.AUG',
+      'DASHBOARD.CALENDAR.MONTHS.SEP',
+      'DASHBOARD.CALENDAR.MONTHS.OCT',
+      'DASHBOARD.CALENDAR.MONTHS.NOV',
+      'DASHBOARD.CALENDAR.MONTHS.DEC',
     ];
-    return monthNames[this.currentMonth];
+    return this.translate.instant(monthKeys[this.currentMonth]);
   }
 
   // Appointment mapping to dates (day of month)
@@ -1164,10 +1177,42 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   get genderOptions() {
     return [
-      { value: 'male', label: 'Male' },
-      { value: 'female', label: 'Female' },
-      { value: 'other', label: 'Other / Prefer not to say' },
+      {
+        value: 'male',
+        label: this.translate.instant('DASHBOARD.PROFILE.GENDER_OPTIONS.MALE'),
+      },
+      {
+        value: 'female',
+        label: this.translate.instant(
+          'DASHBOARD.PROFILE.GENDER_OPTIONS.FEMALE'
+        ),
+      },
+      {
+        value: 'other',
+        label: this.translate.instant('DASHBOARD.PROFILE.GENDER_OPTIONS.OTHER'),
+      },
     ];
+  }
+
+  /**
+   * Get translated appointment type
+   */
+  getAppointmentTypeTranslation(type: string): string {
+    const typeKey = type?.toUpperCase();
+    switch (typeKey) {
+      case 'VIRTUAL':
+        return this.translate.instant('DASHBOARD.APPOINTMENTS.TYPES.VIRTUAL');
+      case 'INTERNAL':
+        return this.translate.instant('DASHBOARD.APPOINTMENTS.TYPES.INTERNAL');
+      case 'EXTERNAL':
+        return this.translate.instant('DASHBOARD.APPOINTMENTS.TYPES.EXTERNAL');
+      case 'CONSULTATION':
+        return this.translate.instant(
+          'DASHBOARD.APPOINTMENTS.TYPES.CONSULTATION'
+        );
+      default:
+        return type || '';
+    }
   }
 
   // ========== AVATAR UPLOAD METHODS ==========

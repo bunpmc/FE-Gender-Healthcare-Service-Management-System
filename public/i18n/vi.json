@@ -293,5 +293,124 @@
   },
   "BACK_TO_TOP": {
     "TITLE": "Lên đầu trang"
+  },
+  "DASHBOARD": {
+    "TITLE": "Bảng điều khiển",
+    "LOADING": "Đang tải dữ liệu bảng điều khiển...",
+    "TRY_AGAIN": "Thử lại",
+    "WELCOME": "Chào mừng trở lại",
+    "PROFILE": {
+      "TITLE": "Hồ sơ cá nhân",
+      "EDIT": "Chỉnh sửa hồ sơ",
+      "SAVE": "Lưu thay đổi",
+      "CANCEL": "Hủy",
+      "FULL_NAME": "Họ và tên",
+      "EMAIL": "Email",
+      "PHONE": "Số điện thoại",
+      "DATE_OF_BIRTH": "Ngày sinh",
+      "GENDER": "Giới tính",
+      "BIO": "Tiểu sử",
+      "AVATAR": "Ảnh đại diện",
+      "UPLOAD_AVATAR": "Tải lên ảnh đại diện",
+      "CHANGE_AVATAR": "Thay đổi ảnh",
+      "GENDER_OPTIONS": {
+        "MALE": "Nam",
+        "FEMALE": "Nữ",
+        "OTHER": "Khác"
+      },
+      "PLACEHOLDERS": {
+        "FULL_NAME": "Nhập họ và tên của bạn",
+        "EMAIL": "Nhập địa chỉ email",
+        "PHONE": "Nhập số điện thoại",
+        "BIO": "Viết vài dòng về bản thân..."
+      },
+      "ERRORS": {
+        "SAVE_FAILED": "Không thể lưu hồ sơ. Vui lòng thử lại.",
+        "UPLOAD_FAILED": "Không thể tải lên ảnh. Vui lòng thử lại.",
+        "INVALID_FILE": "Vui lòng chọn file ảnh hợp lệ"
+      },
+      "SUCCESS": {
+        "SAVED": "Hồ sơ đã được lưu thành công!",
+        "AVATAR_UPLOADED": "Ảnh đại diện đã được cập nhật!"
+      }
+    },
+    "APPOINTMENTS": {
+      "TITLE": "Lịch hẹn của tôi",
+      "UPCOMING": "Lịch hẹn sắp tới",
+      "RECENT": "Lịch hẹn gần đây",
+      "NO_APPOINTMENTS": "Bạn chưa có lịch hẹn nào",
+      "BOOK_NEW": "Đặt lịch mới",
+      "VIEW_ALL": "Xem tất cả",
+      "STATUS": {
+        "PENDING": "Chờ xác nhận",
+        "CONFIRMED": "Đã xác nhận",
+        "COMPLETED": "Hoàn thành",
+        "CANCELLED": "Đã hủy"
+      },
+      "TYPES": {
+        "VIRTUAL": "Khám trực tuyến",
+        "INTERNAL": "Khám nội khoa",
+        "EXTERNAL": "Khám ngoại khoa",
+        "CONSULTATION": "Tư vấn"
+      },
+      "DETAILS": {
+        "DATE": "Ngày",
+        "TIME": "Giờ",
+        "DOCTOR": "Bác sĩ",
+        "TYPE": "Loại khám",
+        "STATUS": "Trạng thái"
+      }
+    },
+    "CALENDAR": {
+      "TITLE": "Lịch khám",
+      "TODAY": "Hôm nay",
+      "VIEWS": {
+        "MONTH": "Tháng",
+        "WEEK": "Tuần",
+        "DAY": "Ngày"
+      },
+      "MONTHS": {
+        "JAN": "Tháng 1",
+        "FEB": "Tháng 2",
+        "MAR": "Tháng 3",
+        "APR": "Tháng 4",
+        "MAY": "Tháng 5",
+        "JUN": "Tháng 6",
+        "JUL": "Tháng 7",
+        "AUG": "Tháng 8",
+        "SEP": "Tháng 9",
+        "OCT": "Tháng 10",
+        "NOV": "Tháng 11",
+        "DEC": "Tháng 12"
+      },
+      "DAYS": {
+        "SUN": "CN",
+        "MON": "T2",
+        "TUE": "T3",
+        "WED": "T4",
+        "THU": "T5",
+        "FRI": "T6",
+        "SAT": "T7"
+      },
+      "NAVIGATION": {
+        "PREV": "Trước",
+        "NEXT": "Tiếp",
+        "TODAY": "Hôm nay"
+      }
+    },
+    "STATISTICS": {
+      "TITLE": "Thống kê",
+      "TOTAL_APPOINTMENTS": "Tổng lịch hẹn",
+      "PENDING_APPOINTMENTS": "Chờ xác nhận",
+      "COMPLETED_APPOINTMENTS": "Đã hoàn thành",
+      "CANCELLED_APPOINTMENTS": "Đã hủy"
+    },
+    "QUICK_ACTIONS": {
+      "TITLE": "Thao tác nhanh",
+      "BOOK_APPOINTMENT": "Đặt lịch khám",
+      "VIEW_MEDICAL_RECORDS": "Xem hồ sơ y tế",
+      "CONTACT_SUPPORT": "Liên hệ hỗ trợ",
+      "UPDATE_PROFILE": "Cập nhật hồ sơ"
+    }
   }
 }
