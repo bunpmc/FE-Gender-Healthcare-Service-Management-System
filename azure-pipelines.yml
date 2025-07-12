@@ -1,0 +1,24 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '16.x'
+  displayName: 'Install Node.js'
+
+- script: |
+    npm install -g @angular/cli
+    npm install
+    ng build --configuration production
+  displayName: 'Install dependencies and build Angular app'
+
+- task: AzureStaticWebApp@0
+  inputs:
+    app_location: '/'
+    output_location: 'dist/GenderHealthcare'  # Replace with your app's output folder
+    azure_static_web_apps_api_token: $(deployment_token)
+  displayName: 'Deploy to Azure Static Web Apps'
