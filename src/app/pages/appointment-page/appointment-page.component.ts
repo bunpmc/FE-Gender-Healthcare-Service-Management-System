@@ -14,6 +14,7 @@ import {
   PhoneRegion,
   ServiceBooking,
   TimeSlot,
+  AppointmentCreateRequest,
 } from '../../models/booking.model';
 import {
   MOCK_DOCTOR_SLOTS,
@@ -338,7 +339,71 @@ export class AppointmentPageComponent implements OnInit {
       );
       return;
     }
-    this.goToNextStep();
+
+    // Validate required fields before redirecting
+    if (!this.booking.fullName || !this.booking.phone) {
+      this.errorMessage = 'Please fill in all required personal information.';
+      return;
+    }
+
+    if (!this.booking.doctor_id || !this.booking.preferred_slot_id) {
+      this.errorMessage = 'Please select a doctor and time slot.';
+      return;
+    }
+
+    // Prepare appointment data for the result page
+    const appointmentData = {
+      // Personal information
+      full_name: this.booking.fullName,
+      phone: this.getFullPhoneNumber(),
+      email: this.booking.email || '',
+      gender: this.booking.gender || 'other',
+
+      // Medical information
+      visit_type: 'consultation',
+      schedule: 'specific_time',
+      message: this.booking.message || '',
+
+      // Doctor and service
+      doctor_id: this.booking.doctor_id,
+      category_id: this.booking.service_id,
+
+      // Slot information
+      slot_id: this.booking.preferred_slot_id,
+      preferred_date: this.selectedDate,
+      preferred_time: this.booking.preferred_time,
+
+      // Booking type
+      booking_type: this.booking.type || 'docfirst',
+    };
+
+    // Store appointment data in session storage for the result page
+    const appointmentResult = {
+      success: false, // Set to false initially, will be processed on result page
+      message: 'Processing appointment...',
+      appointmentData: appointmentData,
+      bookingDetails: {
+        appointment_date: this.selectedDate,
+        appointment_time: this.booking.preferred_time,
+        doctor_id: this.booking.doctor_id,
+        service_id: this.booking.service_id,
+        appointment_status: 'pending',
+      },
+    };
+
+    sessionStorage.setItem(
+      'appointmentResult',
+      JSON.stringify(appointmentResult)
+    );
+
+    console.log(
+      '🧭 Redirecting to appointment result page with data:',
+      appointmentResult
+    );
+    this.router.navigate(['/appointment-success']);
+
+    // Reset form
+    this.resetForm();
   }
 
   // ========== FILTERS, SEARCH, SORT ==========
@@ -749,46 +814,6 @@ export class AppointmentPageComponent implements OnInit {
     }
   }
 
-  // ========== SUBMIT BOOKING ==========
-  submitBooking(): void {
-    if (!this.booking.doctor_id || !this.booking.preferred_slot_id) {
-      const errorMessage = this.translate.instant(
-        'APPOINTMENT.ERRORS.INCOMPLETE_INFO'
-      );
-      alert(errorMessage);
-      return;
-    }
-
-    const bookingPayload = {
-      doctor_id: this.booking.doctor_id,
-      service_id: this.booking.service_id,
-      slot_id: this.booking.preferred_slot_id,
-      patient_name: this.booking.fullName,
-      patient_phone: this.booking.phone,
-      patient_email: this.booking.email,
-      notes: this.booking.message,
-    };
-
-    this.bookingService.bookAppointment(bookingPayload).subscribe({
-      next: (response) => {
-        const successMessage = this.translate.instant(
-          'APPOINTMENT.SUCCESS.BOOKING_CREATED'
-        );
-        alert(successMessage);
-        console.log('Booking successful:', response);
-        this.resetForm();
-        this.router.navigate(['/']);
-      },
-      error: (error) => {
-        console.error('Booking error:', error);
-        const errorPrefix = this.translate.instant(
-          'APPOINTMENT.ERRORS.BOOKING_FAILED'
-        );
-        const retryMessage = this.translate.instant(
-          'APPOINTMENT.ERRORS.PLEASE_RETRY'
-        );
-        alert(errorPrefix + ': ' + (error.message || retryMessage));
-      },
-    });
-  }
+  // ========== REMOVED SUBMIT BOOKING ==========
+  // Appointment creation is now handled on the result page
 }

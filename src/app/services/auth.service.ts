@@ -3,7 +3,15 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../environments/environment';
 import { type UserLogin, type UserRegister } from '../models/user.model';
-import { Observable, BehaviorSubject, from, map, catchError, of, finalize } from 'rxjs';
+import {
+  Observable,
+  BehaviorSubject,
+  from,
+  map,
+  catchError,
+  of,
+  finalize,
+} from 'rxjs';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Patient, DashboardPatient } from '../models/patient.model';
 import { Appointment, DashboardAppointment } from '../models/appointment.model';
@@ -14,6 +22,18 @@ export interface AuthUser {
   email?: string;
   patientId?: string;
   patient?: Patient;
+}
+
+export interface EdgeFunctionUserProfile {
+  id: string;
+  full_name: string;
+  phone: string;
+  email: string;
+  date_of_birth?: string;
+  gender: 'male' | 'female' | 'other';
+  patient_status: 'active' | 'inactive';
+  image_link?: string;
+  appointments: Appointment[];
 }
 
 // ================== SERVICE DECORATOR ==================
@@ -28,7 +48,13 @@ export class AuthService {
   // =========== CONSTRUCTOR ===========
   constructor(private http: HttpClient) {
     // Initialize Supabase client using environment configuration
-    this.supabase = createClient(environment.supabaseUrl, environment.supabaseKey);
+    this.supabase = createClient(
+      environment.supabaseUrl,
+      environment.supabaseKey
+    );
+
+    // Set mock access token for development
+    this.setMockAccessToken();
 
     // For development, mock authentication with first patient
     this.initializeMockAuth();
@@ -39,6 +65,31 @@ export class AuthService {
     return new HttpHeaders({
       'Content-Type': 'application/json',
     });
+  }
+
+  // =========== MOCK ACCESS TOKEN ===========
+  private setMockAccessToken(): void {
+    // For development, try to get a real Supabase session
+    this.supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        if (session?.access_token) {
+          localStorage.setItem('access_token', session.access_token);
+          console.log('Real Supabase access token set');
+        } else {
+          // Fallback to mock token for development
+          const mockToken = 'mock-access-token-for-development';
+          localStorage.setItem('access_token', mockToken);
+          console.log('Mock access token set for development');
+        }
+      })
+      .catch((error) => {
+        console.error('Error getting Supabase session:', error);
+        // Fallback to mock token
+        const mockToken = 'mock-access-token-for-development';
+        localStorage.setItem('access_token', mockToken);
+        console.log('Mock access token set as fallback');
+      });
   }
 
   // =========== REGISTER USER ===========
@@ -126,6 +177,66 @@ export class AuthService {
     });
   }
 
+  // =========== EDGE FUNCTION PROFILE ===========
+  getUserProfileFromEdgeFunction(): Observable<EdgeFunctionUserProfile> {
+    let token =
+      localStorage.getItem('access_token') ||
+      sessionStorage.getItem('access_token');
+
+    if (!token) {
+      throw new Error('No access token found');
+    }
+
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    });
+
+    // Call the edge function endpoint
+    const edgeFunctionUrl = `${environment.supabaseUrl}/functions/v1/me`;
+    return this.http
+      .get<EdgeFunctionUserProfile>(edgeFunctionUrl, {
+        headers,
+      })
+      .pipe(
+        map((response) => {
+          // Update current user with edge function data
+          if (response) {
+            const updatedUser: AuthUser = {
+              id: response.id,
+              phone: response.phone,
+              email: response.email,
+              patientId: response.id,
+              patient: {
+                id: response.id,
+                full_name: response.full_name,
+                phone: response.phone,
+                email: response.email,
+                date_of_birth: response.date_of_birth,
+                gender: response.gender,
+                patient_status: response.patient_status,
+                image_link: response.image_link,
+                vaccination_status: 'not_vaccinated', // Default value
+                allergies: null,
+                chronic_conditions: null,
+                past_surgeries: null,
+                bio: null,
+              },
+            };
+            this.currentUserSubject.next(updatedUser);
+          }
+          return response;
+        }),
+        catchError((error) => {
+          console.error(
+            'Error fetching user profile from edge function:',
+            error
+          );
+          throw error;
+        })
+      );
+  }
+
   // =========== PATIENT STATE MANAGEMENT ===========
 
   /**
@@ -141,69 +252,79 @@ export class AuthService {
         .select('*')
         .eq('id', testPatientId)
         .single()
-    ).pipe(
-      map(response => {
-        if (response.error) {
-          console.warn('Test patient not found, using first available patient');
-          // Fallback to first patient if test patient not found
+    )
+      .pipe(
+        map((response) => {
+          if (response.error) {
+            console.warn(
+              'Test patient not found, using first available patient'
+            );
+            // Fallback to first patient if test patient not found
+            this.initializeFallbackAuth();
+            return;
+          }
+
+          const patient = response.data;
+          const mockUser: AuthUser = {
+            id: 'mock-user-id',
+            phone: patient.phone,
+            email: patient.email,
+            patientId: patient.id,
+            patient: patient,
+          };
+
+          console.log(
+            'Mock authentication successful for patient:',
+            patient.full_name,
+            'ID:',
+            patient.id
+          );
+          this.currentUserSubject.next(mockUser);
+        }),
+        catchError((error) => {
+          console.error('Mock authentication failed:', error);
           this.initializeFallbackAuth();
-          return;
-        }
-
-        const patient = response.data;
-        const mockUser: AuthUser = {
-          id: 'mock-user-id',
-          phone: patient.phone,
-          email: patient.email,
-          patientId: patient.id,
-          patient: patient
-        };
-
-        console.log('Mock authentication successful for patient:', patient.full_name, 'ID:', patient.id);
-        this.currentUserSubject.next(mockUser);
-      }),
-      catchError(error => {
-        console.error('Mock authentication failed:', error);
-        this.initializeFallbackAuth();
-        return of(null);
-      })
-    ).subscribe();
+          return of(null);
+        })
+      )
+      .subscribe();
   }
 
   /**
    * Fallback authentication with first available patient
    */
   private initializeFallbackAuth(): void {
-    from(
-      this.supabase
-        .from('patients')
-        .select('*')
-        .limit(1)
-        .single()
-    ).pipe(
-      map(response => {
-        if (response.error) {
-          console.warn('No patients found for fallback auth');
-          return;
-        }
+    from(this.supabase.from('patients').select('*').limit(1).single())
+      .pipe(
+        map((response) => {
+          if (response.error) {
+            console.warn('No patients found for fallback auth');
+            return;
+          }
 
-        const patient = response.data;
-        const mockUser: AuthUser = {
-          id: 'mock-user-id',
-          phone: patient.phone,
-          email: patient.email,
-          patientId: patient.id,
-          patient: patient
-        };
+          const patient = response.data;
+          const mockUser: AuthUser = {
+            id: 'mock-user-id',
+            phone: patient.phone,
+            email: patient.email,
+            patientId: patient.id,
+            patient: patient,
+          };
 
-        console.log('Fallback authentication successful for patient:', patient.full_name, 'ID:', patient.id);
-        this.currentUserSubject.next(mockUser);
-      }),
-      catchError(error => {
-        console.error('Fallback authentication failed:', error);
-        return of(null);
-      })
-    ).subscribe();
+          console.log(
+            'Fallback authentication successful for patient:',
+            patient.full_name,
+            'ID:',
+            patient.id
+          );
+          this.currentUserSubject.next(mockUser);
+        }),
+        catchError((error) => {
+          console.error('Fallback authentication failed:', error);
+          return of(null);
+        })
+      )
+      .subscribe();
   }
 
   /**
@@ -251,7 +372,7 @@ export class AuthService {
     if (currentUser) {
       const updatedUser: AuthUser = {
         ...currentUser,
-        patient: updatedPatient
+        patient: updatedPatient,
       };
       this.currentUserSubject.next(updatedUser);
     }
@@ -262,13 +383,9 @@ export class AuthService {
    */
   mockAuthWithPatientId(patientId: string): Observable<boolean> {
     return from(
-      this.supabase
-        .from('patients')
-        .select('*')
-        .eq('id', patientId)
-        .single()
+      this.supabase.from('patients').select('*').eq('id', patientId).single()
     ).pipe(
-      map(response => {
+      map((response) => {
         if (response.error) {
           throw new Error(response.error.message);
         }
@@ -279,13 +396,13 @@ export class AuthService {
           phone: patient.phone,
           email: patient.email,
           patientId: patient.id,
-          patient: patient
+          patient: patient,
         };
 
         this.currentUserSubject.next(mockUser);
         return true;
       }),
-      catchError(error => {
+      catchError((error) => {
         console.error('Mock authentication failed:', error);
         return of(false);
       })
@@ -304,13 +421,13 @@ export class AuthService {
         .select('*')
         .order('created_at', { ascending: false })
     ).pipe(
-      map(response => {
+      map((response) => {
         if (response.error) {
           throw new Error(response.error.message);
         }
         return response.data || [];
       }),
-      catchError(error => {
+      catchError((error) => {
         console.error('Error fetching patients:', error);
         return of([]);
       })
@@ -322,7 +439,9 @@ export class AuthService {
    */
   getDashboardPatients(): Observable<DashboardPatient[]> {
     return this.getPatients().pipe(
-      map(patients => patients.map(patient => this.transformPatientForDashboard(patient)))
+      map((patients) =>
+        patients.map((patient) => this.transformPatientForDashboard(patient))
+      )
     );
   }
 
@@ -331,17 +450,15 @@ export class AuthService {
    */
   getPatientCount(): Observable<number> {
     return from(
-      this.supabase
-        .from('patients')
-        .select('*', { count: 'exact', head: true })
+      this.supabase.from('patients').select('*', { count: 'exact', head: true })
     ).pipe(
-      map(response => {
+      map((response) => {
         if (response.error) {
           throw new Error(response.error.message);
         }
         return response.count || 0;
       }),
-      catchError(error => {
+      catchError((error) => {
         console.error('Error fetching patient count:', error);
         return of(0);
       })
@@ -363,13 +480,13 @@ export class AuthService {
     }
 
     return from(query).pipe(
-      map(response => {
+      map((response) => {
         if (response.error) {
           throw new Error(response.error.message);
         }
         return response.data || [];
       }),
-      catchError(error => {
+      catchError((error) => {
         console.error('Error fetching appointments:', error);
         return of([]);
       })
@@ -379,9 +496,15 @@ export class AuthService {
   /**
    * Get dashboard-specific appointment data
    */
-  getDashboardAppointments(patientId?: string): Observable<DashboardAppointment[]> {
+  getDashboardAppointments(
+    patientId?: string
+  ): Observable<DashboardAppointment[]> {
     return this.getAppointments(patientId).pipe(
-      map(appointments => appointments.map(appointment => this.transformAppointmentForDashboard(appointment)))
+      map((appointments) =>
+        appointments.map((appointment) =>
+          this.transformAppointmentForDashboard(appointment)
+        )
+      )
     );
   }
 
@@ -398,14 +521,17 @@ export class AuthService {
     }
 
     return from(query).pipe(
-      map(response => {
+      map((response) => {
         if (response.error) {
           throw new Error(response.error.message);
         }
         return response.count || 0;
       }),
-      catchError(error => {
-        console.error(`Error fetching appointment count for status ${status}:`, error);
+      catchError((error) => {
+        console.error(
+          `Error fetching appointment count for status ${status}:`,
+          error
+        );
         return of(0);
       })
     );
@@ -414,7 +540,10 @@ export class AuthService {
   /**
    * Update patient profile information
    */
-  updatePatientProfile(patientId: string, updates: Partial<Patient>): Observable<Patient> {
+  updatePatientProfile(
+    patientId: string,
+    updates: Partial<Patient>
+  ): Observable<Patient> {
     return from(
       this.supabase
         .from('patients')
@@ -423,13 +552,13 @@ export class AuthService {
         .select()
         .single()
     ).pipe(
-      map(response => {
+      map((response) => {
         if (response.error) {
           throw new Error(response.error.message);
         }
         return response.data;
       }),
-      catchError(error => {
+      catchError((error) => {
         console.error('Error updating patient profile:', error);
         throw error;
       })
@@ -439,13 +568,14 @@ export class AuthService {
   /**
    * Upload avatar image to Supabase Storage
    */
-  uploadAvatar(filePath: string, file: File): Promise<{ data: any; error: any }> {
-    return this.supabase.storage
-      .from('avatars')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: true
-      });
+  uploadAvatar(
+    filePath: string,
+    file: File
+  ): Promise<{ data: any; error: any }> {
+    return this.supabase.storage.from('avatars').upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: true,
+    });
   }
 
   /**
@@ -465,7 +595,9 @@ export class AuthService {
    * Transform Patient to DashboardPatient
    */
   private transformPatientForDashboard(patient: Patient): DashboardPatient {
-    const age = patient.date_of_birth ? this.calculateAge(patient.date_of_birth) : undefined;
+    const age = patient.date_of_birth
+      ? this.calculateAge(patient.date_of_birth)
+      : undefined;
 
     return {
       id: patient.id,
@@ -475,16 +607,22 @@ export class AuthService {
       gender: patient.gender,
       age: age,
       status: patient.patient_status,
-      image_link: patient.image_link
+      image_link: patient.image_link,
     };
   }
 
   /**
    * Transform Appointment to DashboardAppointment
    */
-  private transformAppointmentForDashboard(appointment: Appointment): DashboardAppointment {
-    const appointmentDate = appointment.appointment_date || appointment.preferred_date || new Date().toISOString().split('T')[0];
-    const appointmentTime = appointment.appointment_time || appointment.preferred_time || '00:00';
+  private transformAppointmentForDashboard(
+    appointment: Appointment
+  ): DashboardAppointment {
+    const appointmentDate =
+      appointment.appointment_date ||
+      appointment.preferred_date ||
+      new Date().toISOString().split('T')[0];
+    const appointmentTime =
+      appointment.appointment_time || appointment.preferred_time || '00:00';
 
     return {
       id: appointment.appointment_id,
@@ -493,7 +631,7 @@ export class AuthService {
       time: this.formatTime(appointmentTime),
       date: appointmentDate,
       status: appointment.appointment_status || 'pending',
-      schedule: appointment.schedule
+      schedule: appointment.schedule,
     };
   }
 
@@ -506,7 +644,10 @@ export class AuthService {
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
 
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
       age--;
     }
 

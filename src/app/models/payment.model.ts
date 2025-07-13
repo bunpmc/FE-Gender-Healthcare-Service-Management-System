@@ -21,6 +21,7 @@ export interface VNPayPaymentRequest {
   orderInfo: string;
   patientId?: string;
   services?: CartItem[];
+  orderId?: string; // Optional order ID for tracking
 }
 
 export interface VNPayPaymentResponse {
@@ -52,6 +53,8 @@ export interface VNPayCallbackData {
   vnp_TransactionStatus: string;
   vnp_TxnRef: string;
   vnp_SecureHash: string;
+  orderId?: string; // Order ID for tracking purposes
+  txnRef?: string; // Optional fallback parameter for compatibility
 }
 
 export interface PaymentTransaction {

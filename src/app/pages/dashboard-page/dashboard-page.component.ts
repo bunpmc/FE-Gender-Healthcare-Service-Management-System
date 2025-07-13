@@ -7,9 +7,17 @@ import { takeUntil, finalize } from 'rxjs/operators';
 
 import { HeaderComponent } from '../../components/header/header.component';
 import { FooterComponent } from '../../components/footer/footer.component';
-import { AuthService } from '../../services/auth.service';
+import {
+  AuthService,
+  EdgeFunctionUserProfile,
+} from '../../services/auth.service';
 import { DashboardPatient, Patient } from '../../models/patient.model';
-import { DashboardAppointment, CalendarDay, DashboardState } from '../../models/appointment.model';
+import {
+  DashboardAppointment,
+  CalendarDay,
+  DashboardState,
+} from '../../models/appointment.model';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-dashboard',
@@ -21,7 +29,7 @@ import { DashboardAppointment, CalendarDay, DashboardState } from '../../models/
     TranslateModule,
   ],
   templateUrl: './dashboard-page.component.html',
-  styleUrl: './dashboard-page.component.css'
+  styleUrl: './dashboard-page.component.css',
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   // Make Math available in template
@@ -49,7 +57,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     email: '',
     dateOfBirth: '',
     gender: 'other' as 'male' | 'female' | 'other',
-    imageLink: ''
+    imageLink: '',
   };
 
   // Temporary data for editing
@@ -64,7 +72,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     totalPatients: 0,
     totalAppointments: 0,
     pendingAppointments: 0,
-    confirmedAppointments: 0
+    confirmedAppointments: 0,
   };
 
   // Appointments data from Supabase
@@ -76,9 +84,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Destroy subject for cleanup
   private destroy$ = new Subject<void>();
 
-  constructor(
-    private authService: AuthService
-  ) {}
+  // Edge function user profile data
+  edgeFunctionProfile: EdgeFunctionUserProfile | null = null;
+  isLoadingEdgeProfile = false;
+  edgeProfileError: string | null = null;
+
+  // Dashboard statistics
+  dashboardStatistics = {
+    totalPatients: 0,
+    totalAppointments: 0,
+    pendingAppointments: 0,
+    confirmedAppointments: 0,
+  };
+
+  constructor(private authService: AuthService) {}
 
   // Appointment mapping to dates (day of month)
   appointmentMapping: { [key: number]: DashboardAppointment[] } = {};
@@ -88,6 +107,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.generateCalendarDays();
     // Load user profile data
     this.loadUserProfile();
+    // Load edge function profile data
+    this.loadEdgeFunctionProfile();
     // Load dashboard data from Supabase
     this.loadDashboardData();
 
@@ -130,10 +151,137 @@ export class DashboardComponent implements OnInit, OnDestroy {
         email: currentPatient.email || '',
         dateOfBirth: currentPatient.date_of_birth || '',
         gender: currentPatient.gender || 'other',
-        imageLink: currentPatient.image_link || ''
+        imageLink: currentPatient.image_link || '',
       };
       this.editdashboard = { ...this.dashboard };
     }
+  }
+
+  /**
+   * Load user profile data from edge function
+   */
+  loadEdgeFunctionProfile(): void {
+    this.isLoadingEdgeProfile = true;
+    this.edgeProfileError = null;
+
+    this.authService
+      .getUserProfileFromEdgeFunction()
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.isLoadingEdgeProfile = false;
+        })
+      )
+      .subscribe({
+        next: (profile) => {
+          this.edgeFunctionProfile = profile;
+          console.log('Edge function profile loaded:', profile);
+
+          // Update dashboard with edge function data
+          this.dashboard = {
+            name: profile.full_name || '',
+            bio: '', // Edge function doesn't provide bio
+            phone: profile.phone || '',
+            email: profile.email || '',
+            dateOfBirth: profile.date_of_birth || '',
+            gender: profile.gender || 'other',
+            imageLink: profile.image_link || '',
+          };
+          this.editdashboard = { ...this.dashboard };
+
+          // Update dashboard stats with edge function data
+          this.updateDashboardStats();
+
+          // Convert edge function appointments to dashboard format and update calendar
+          this.convertEdgeFunctionAppointments();
+          this.updateAppointmentMapping();
+          this.generateCalendarDays();
+        },
+        error: (error) => {
+          console.error('Error loading edge function profile:', error);
+          this.edgeProfileError =
+            'Failed to load profile from server. Using local data.';
+          // Fallback to local profile loading
+          this.loadUserProfile();
+        },
+      });
+  }
+
+  /**
+   * Update dashboard statistics with edge function data
+   */
+  updateDashboardStats(): void {
+    if (this.edgeFunctionProfile?.appointments) {
+      const appointments = this.edgeFunctionProfile.appointments;
+
+      // Count appointments by status
+      const pendingCount = appointments.filter(
+        (apt) => apt.appointment_status === 'pending'
+      ).length;
+      const confirmedCount = appointments.filter(
+        (apt) => apt.appointment_status === 'confirmed'
+      ).length;
+      const completedCount = appointments.filter(
+        (apt) => apt.appointment_status === 'completed'
+      ).length;
+
+      // Update dashboard stats
+      this.dashboardStatistics = {
+        totalPatients: 1, // Current user
+        totalAppointments: appointments.length,
+        pendingAppointments: pendingCount,
+        confirmedAppointments: completedCount,
+      };
+
+      console.log('Dashboard stats updated:', this.dashboardStatistics);
+    }
+  }
+
+  /**
+   * Convert edge function appointments to dashboard appointment format
+   */
+  convertEdgeFunctionAppointments(): void {
+    if (!this.edgeFunctionProfile?.appointments) {
+      return;
+    }
+
+    console.log(
+      'Converting edge function appointments to dashboard format:',
+      this.edgeFunctionProfile.appointments
+    );
+
+    // Convert edge function appointments to dashboard format
+    const edgeAppointments: DashboardAppointment[] =
+      this.edgeFunctionProfile.appointments
+        .filter((apt) => apt.appointment_date && apt.appointment_time) // Only include appointments with date and time
+        .map((apt) => ({
+          id: apt.appointment_id,
+          title: `${apt.visit_type} Appointment`,
+          type: apt.visit_type as
+            | 'virtual'
+            | 'internal'
+            | 'external'
+            | 'consultation',
+          time: apt.appointment_time || '',
+          date: apt.appointment_date || '',
+          status: apt.appointment_status,
+          patientName: this.edgeFunctionProfile?.full_name || 'Unknown',
+          doctorName: 'Dr. TBD', // Edge function doesn't provide doctor name
+          schedule: apt.schedule as 'Morning' | 'Afternoon' | 'Evening',
+        }));
+
+    console.log('Converted edge appointments:', edgeAppointments);
+
+    // Merge with existing appointments (avoid duplicates)
+    const existingIds = new Set(this.appointments.map((apt) => apt.id));
+    const newAppointments = edgeAppointments.filter(
+      (apt) => !existingIds.has(apt.id)
+    );
+
+    // Add new appointments to the existing list
+    this.appointments = [...this.appointments, ...newAppointments];
+
+    console.log('Final appointments list:', this.appointments);
   }
 
   /**
@@ -147,52 +295,57 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     forkJoin({
       patients: this.authService.getDashboardPatients(),
-      appointments: this.authService.getDashboardAppointments(currentPatientId || undefined),
+      appointments: this.authService.getDashboardAppointments(
+        currentPatientId || undefined
+      ),
       patientCount: this.authService.getPatientCount(),
       appointmentCount: this.authService.getAppointmentCountByStatus(),
       pendingCount: this.authService.getAppointmentCountByStatus('pending'),
-      confirmedCount: this.authService.getAppointmentCountByStatus('confirmed')
-    }).pipe(
-      takeUntil(this.destroy$),
-      finalize(() => {
-        this.dashboardState.isLoading = false;
-      })
-    ).subscribe({
-      next: (data) => {
-        console.log('Dashboard data loaded:', {
-          patients: data.patients.length,
-          appointments: data.appointments.length,
-          appointmentData: data.appointments
-        });
+      confirmedCount: this.authService.getAppointmentCountByStatus('confirmed'),
+    })
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.dashboardState.isLoading = false;
+        })
+      )
+      .subscribe({
+        next: (data) => {
+          console.log('Dashboard data loaded:', {
+            patients: data.patients.length,
+            appointments: data.appointments.length,
+            appointmentData: data.appointments,
+          });
 
-        this.dashboardState.patients = data.patients;
-        this.dashboardState.appointments = data.appointments;
-        this.dashboardState.totalPatients = data.patientCount;
-        this.dashboardState.totalAppointments = data.appointmentCount;
-        this.dashboardState.pendingAppointments = data.pendingCount;
-        this.dashboardState.confirmedAppointments = data.confirmedCount;
+          this.dashboardState.patients = data.patients;
+          this.dashboardState.appointments = data.appointments;
+          this.dashboardState.totalPatients = data.patientCount;
+          this.dashboardState.totalAppointments = data.appointmentCount;
+          this.dashboardState.pendingAppointments = data.pendingCount;
+          this.dashboardState.confirmedAppointments = data.confirmedCount;
 
-        // Update component properties
-        this.patients = data.patients;
-        this.appointments = data.appointments;
+          // Update component properties
+          this.patients = data.patients;
+          this.appointments = data.appointments;
 
-        // Update appointment mapping for calendar
-        this.updateAppointmentMapping();
+          // Update appointment mapping for calendar
+          this.updateAppointmentMapping();
 
-        // Regenerate calendar with new data
-        this.generateCalendarDays();
-      },
-      error: (error) => {
-        console.error('Error loading dashboard data:', error);
-        this.dashboardState.error = 'Failed to load dashboard data. Please try again.';
+          // Regenerate calendar with new data
+          this.generateCalendarDays();
+        },
+        error: (error) => {
+          console.error('Error loading dashboard data:', error);
+          this.dashboardState.error =
+            'Failed to load dashboard data. Please try again.';
 
-        // Fallback to empty data
-        this.dashboardState.patients = [];
-        this.dashboardState.appointments = [];
-        this.patients = [];
-        this.appointments = [];
-      }
-    });
+          // Fallback to empty data
+          this.dashboardState.patients = [];
+          this.dashboardState.appointments = [];
+          this.patients = [];
+          this.appointments = [];
+        },
+      });
   }
 
   /**
@@ -201,14 +354,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private updateAppointmentMapping(): void {
     this.appointmentMapping = {};
 
-    console.log('Updating appointment mapping with appointments:', this.appointments);
+    console.log(
+      'Updating appointment mapping with appointments:',
+      this.appointments
+    );
 
-    this.appointments.forEach(appointment => {
+    this.appointments.forEach((appointment) => {
       if (appointment.date) {
         const appointmentDate = new Date(appointment.date);
         const dayOfMonth = appointmentDate.getDate();
 
-        console.log('Mapping appointment:', appointment.title, 'to day:', dayOfMonth, 'date:', appointment.date);
+        console.log(
+          'Mapping appointment:',
+          appointment.title,
+          'to day:',
+          dayOfMonth,
+          'date:',
+          appointment.date
+        );
 
         if (!this.appointmentMapping[dayOfMonth]) {
           this.appointmentMapping[dayOfMonth] = [];
@@ -260,13 +423,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
       const isCurrentMonth = date.getMonth() === this.currentMonth;
       const isToday = this.isSameDay(date, this.today);
 
-      const appointments = isCurrentMonth ? (this.appointmentMapping[dayNumber] || []) : [];
+      const appointments = isCurrentMonth
+        ? this.appointmentMapping[dayNumber] || []
+        : [];
 
       days.push({
         date: dayNumber,
         isCurrentMonth,
         isToday,
-        appointments
+        appointments,
       });
     }
 
@@ -278,7 +443,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   private generateWeekDays(): CalendarDay[] {
     const days: CalendarDay[] = [];
-    const currentDate = new Date(this.currentYear, this.currentMonth, this.currentDate.getDate());
+    const currentDate = new Date(
+      this.currentYear,
+      this.currentMonth,
+      this.currentDate.getDate()
+    );
 
     // Get start of week (Sunday)
     const startOfWeek = new Date(currentDate);
@@ -295,7 +464,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         date: date.getDate(),
         isCurrentMonth: date.getMonth() === this.currentMonth,
         isToday: this.isSameDay(date, this.today),
-        appointments: dayAppointments
+        appointments: dayAppointments,
       });
     }
 
@@ -306,22 +475,28 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * Generate single day for day view
    */
   private generateSingleDay(): CalendarDay[] {
-    const currentDate = new Date(this.currentYear, this.currentMonth, this.currentDate.getDate());
+    const currentDate = new Date(
+      this.currentYear,
+      this.currentMonth,
+      this.currentDate.getDate()
+    );
     const dayAppointments = this.getAppointmentsForDate(currentDate);
 
-    return [{
-      date: currentDate.getDate(),
-      isCurrentMonth: true,
-      isToday: this.isSameDay(currentDate, this.today),
-      appointments: dayAppointments
-    }];
+    return [
+      {
+        date: currentDate.getDate(),
+        isCurrentMonth: true,
+        isToday: this.isSameDay(currentDate, this.today),
+        appointments: dayAppointments,
+      },
+    ];
   }
 
   /**
    * Get appointments for a specific date
    */
   private getAppointmentsForDate(date: Date): DashboardAppointment[] {
-    return this.appointments.filter(appointment => {
+    return this.appointments.filter((appointment) => {
       if (!appointment.date) return false;
       const appointmentDate = new Date(appointment.date);
       return this.isSameDay(appointmentDate, date);
@@ -329,9 +504,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   isSameDay(date1: Date, date2: Date): boolean {
-    return date1.getDate() === date2.getDate() &&
-           date1.getMonth() === date2.getMonth() &&
-           date1.getFullYear() === date2.getFullYear();
+    return (
+      date1.getDate() === date2.getDate() &&
+      date1.getMonth() === date2.getMonth() &&
+      date1.getFullYear() === date2.getFullYear()
+    );
   }
 
   // ========== CALENDAR NAVIGATION METHODS ==========
@@ -466,8 +643,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   get currentMonthName(): string {
     const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return `${monthNames[this.currentMonth]} ${this.currentYear}`;
   }
@@ -489,8 +676,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   get availableMonths(): { value: number; name: string }[] {
     const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return monthNames.map((name, index) => ({ value: index, name }));
   }
@@ -500,7 +697,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   goToNextMonth(): void {
     const nextMonth = this.currentMonth === 11 ? 0 : this.currentMonth + 1;
-    const nextYear = this.currentMonth === 11 ? this.currentYear + 1 : this.currentYear;
+    const nextYear =
+      this.currentMonth === 11 ? this.currentYear + 1 : this.currentYear;
     this.goToMonth(nextMonth, nextYear);
   }
 
@@ -530,15 +728,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * Get day names for week view
    */
   get dayNames(): string[] {
-    return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return [
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+    ];
   }
 
   /**
    * Get appointments positioned by time for a specific date
    */
-  getAppointmentsForTimeSlot(date: Date, timeSlot: string): DashboardAppointment[] {
+  getAppointmentsForTimeSlot(
+    date: Date,
+    timeSlot: string
+  ): DashboardAppointment[] {
     const dayAppointments = this.getAppointmentsForDate(date);
-    return dayAppointments.filter(appointment => {
+    return dayAppointments.filter((appointment) => {
       if (!appointment.time) return false;
       // Convert appointment time to match time slot format
       const appointmentTime = this.convertTo12HourFormat(appointment.time);
@@ -549,7 +758,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   /**
    * Get appointments for a specific day and time slot (template helper)
    */
-  getAppointmentsForDayTimeSlot(dayNumber: number, timeSlot: string): DashboardAppointment[] {
+  getAppointmentsForDayTimeSlot(
+    dayNumber: number,
+    timeSlot: string
+  ): DashboardAppointment[] {
     const date = new Date(this.currentYear, this.currentMonth, dayNumber);
     return this.getAppointmentsForTimeSlot(date, timeSlot);
   }
@@ -621,33 +833,36 @@ export class DashboardComponent implements OnInit, OnDestroy {
         email: this.editdashboard.email,
         date_of_birth: this.editdashboard.dateOfBirth || null,
         gender: this.editdashboard.gender,
-        image_link: avatarUrl || null
+        image_link: avatarUrl || null,
       };
 
-      this.authService.updatePatientProfile(currentPatientId, updates).pipe(
-        takeUntil(this.destroy$),
-        finalize(() => {
-          this.isProfileSaving = false;
-        })
-      ).subscribe({
-        next: (updatedPatient) => {
-          // Update local dashboard data
-          this.dashboard = { ...this.editdashboard };
-          this.isEditing = false;
+      this.authService
+        .updatePatientProfile(currentPatientId, updates)
+        .pipe(
+          takeUntil(this.destroy$),
+          finalize(() => {
+            this.isProfileSaving = false;
+          })
+        )
+        .subscribe({
+          next: (updatedPatient) => {
+            // Update local dashboard data
+            this.dashboard = { ...this.editdashboard };
+            this.isEditing = false;
 
-          // Reset avatar selection
-          this.resetAvatarSelection();
+            // Reset avatar selection
+            this.resetAvatarSelection();
 
-          // Update auth service with new patient data
-          this.authService.updateCurrentPatient(updatedPatient);
+            // Update auth service with new patient data
+            this.authService.updateCurrentPatient(updatedPatient);
 
-          console.log('Profile updated successfully');
-        },
-        error: (error) => {
-          console.error('Error updating profile:', error);
-          this.profileError = 'Failed to update profile. Please try again.';
-        }
-      });
+            console.log('Profile updated successfully');
+          },
+          error: (error) => {
+            console.error('Error updating profile:', error);
+            this.profileError = 'Failed to update profile. Please try again.';
+          },
+        });
     } catch (error) {
       console.error('Error in profile save process:', error);
       this.profileError = 'An unexpected error occurred. Please try again.';
@@ -705,7 +920,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
 
     if (!this.isValidPhone(this.editdashboard.phone)) {
-      this.profileError = 'Please enter a valid phone number (e.g., +84901234567 or 0901234567)';
+      this.profileError =
+        'Please enter a valid phone number (e.g., +84901234567 or 0901234567)';
       return false;
     }
 
@@ -719,7 +935,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return [
       { value: 'male', label: 'Male' },
       { value: 'female', label: 'Female' },
-      { value: 'other', label: 'Other / Prefer not to say' }
+      { value: 'other', label: 'Other / Prefer not to say' },
     ];
   }
 
@@ -780,7 +996,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
       const filePath = `avatars/${fileName}`;
 
       // Upload to Supabase Storage
-      const uploadResult = await this.authService.uploadAvatar(filePath, this.selectedAvatarFile);
+      const uploadResult = await this.authService.uploadAvatar(
+        filePath,
+        this.selectedAvatarFile
+      );
 
       if (uploadResult.error) {
         throw new Error(uploadResult.error.message);
@@ -789,7 +1008,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       // Get public URL
       const publicUrl = this.authService.getAvatarPublicUrl(filePath);
       return publicUrl;
-
     } catch (error) {
       console.error('Error uploading avatar:', error);
       this.profileError = 'Failed to upload avatar. Please try again.';
@@ -809,16 +1027,43 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   // Utility methods for appointment display
-  getAppointmentTypeClass(type: 'virtual' | 'internal' | 'external' | 'consultation'): string {
+  getAppointmentTypeClass(
+    type: 'virtual' | 'internal' | 'external' | 'consultation'
+  ): string {
     return `appointment ${type}`;
   }
 
-  getStatusClass(status?: 'pending' | 'confirmed' | 'cancelled' | 'completed'): string {
+  /**
+   * Get full image URL with Supabase storage URL
+   */
+  getFullImageUrl(imageLink: string | null | undefined): string {
+    if (!imageLink) {
+      return 'https://xzxxodxplyetecrsbxmc.supabase.co/storage/v1/object/public/patient-uploads//default.jpg';
+    }
+
+    // If the image link already starts with http/https, return as is
+    if (imageLink.startsWith('http://') || imageLink.startsWith('https://')) {
+      return imageLink;
+    }
+
+    // If it's a relative path, prepend the Supabase storage URL
+    // Remove leading slash if present since supabaseStorageUrl already ends with /
+    const cleanImageLink = imageLink.startsWith('/')
+      ? imageLink.substring(1)
+      : imageLink;
+    return `${environment.supabaseStorageUrl}${cleanImageLink}`;
+  }
+
+  getStatusClass(
+    status?: 'pending' | 'confirmed' | 'cancelled' | 'completed'
+  ): string {
     if (!status) return '';
     return `appointment-status ${status}`;
   }
 
-  getStatusText(status?: 'pending' | 'confirmed' | 'cancelled' | 'completed'): string {
+  getStatusText(
+    status?: 'pending' | 'confirmed' | 'cancelled' | 'completed'
+  ): string {
     if (!status) return '';
     return `• ${status.toUpperCase()}`;
   }
@@ -847,7 +1092,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       totalPatients: this.dashboardState.totalPatients,
       totalAppointments: this.dashboardState.totalAppointments,
       pendingAppointments: this.dashboardState.pendingAppointments,
-      confirmedAppointments: this.dashboardState.confirmedAppointments
+      confirmedAppointments: this.dashboardState.confirmedAppointments,
     };
   }
 

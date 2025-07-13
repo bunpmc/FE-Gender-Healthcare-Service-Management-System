@@ -40,23 +40,19 @@ export class PaymentResultComponent implements OnInit {
         return;
       }
 
-      // Parse VNPay callback data
-      this.callbackData = {
-        vnp_Amount: params['vnp_Amount'] || '',
-        vnp_BankCode: params['vnp_BankCode'] || '',
-        vnp_BankTranNo: params['vnp_BankTranNo'] || '',
-        vnp_CardType: params['vnp_CardType'] || '',
-        vnp_OrderInfo: params['vnp_OrderInfo'] || '',
-        vnp_PayDate: params['vnp_PayDate'] || '',
-        vnp_ResponseCode: params['vnp_ResponseCode'] || '',
-        vnp_TmnCode: params['vnp_TmnCode'] || '',
-        vnp_TransactionNo: params['vnp_TransactionNo'] || '',
-        vnp_TransactionStatus: params['vnp_TransactionStatus'] || '',
-        vnp_TxnRef: params['vnp_TxnRef'] || '',
-        vnp_SecureHash: params['vnp_SecureHash'] || '',
-      };
+      console.log('Received VNPay callback parameters:', params);
 
-      // Verify payment with backend
+      // Use the enhanced VnpayService to parse callback data
+      this.callbackData =
+        this.vnpayService.parseCallbackFromQueryParams(params);
+
+      if (!this.callbackData) {
+        this.errorMessage = 'Dữ liệu thanh toán không hợp lệ hoặc bị thiếu';
+        this.isLoading = false;
+        return;
+      }
+
+      // Verify payment with backend using the enhanced method
       this.verifyPayment();
     });
   }
@@ -69,18 +65,37 @@ export class PaymentResultComponent implements OnInit {
     }
 
     this.vnpayService.verifyCallback(this.callbackData).subscribe({
-      next: (result) => {
-        this.paymentResult = result;
-        this.isLoading = false;
-
-        // Clear cart if payment was successful
-        if (result.success) {
+      next: (result: any) => {
+        // Handle the edge function response format
+        if (result.status === 'success') {
+          this.paymentResult = {
+            success: true,
+            message: result.message,
+            transaction_id: result.transactionNo,
+            payment_details: this.callbackData ?? undefined,
+          };
+          // Clear cart if payment was successful
           this.cartService.clearCart();
+        } else if (result.status === 'failed') {
+          this.paymentResult = {
+            success: false,
+            message: result.message,
+            payment_details: this.callbackData ?? undefined,
+          };
+        } else {
+          // Handle error status
+          this.paymentResult = {
+            success: false,
+            message: result.message || 'Có lỗi xảy ra khi xử lý thanh toán',
+            payment_details: this.callbackData ?? undefined,
+          };
         }
+        this.isLoading = false;
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Payment verification error:', error);
-        this.errorMessage = 'Có lỗi xảy ra khi xác thực thanh toán';
+        this.errorMessage =
+          error.error?.message || 'Có lỗi xảy ra khi xác thực thanh toán';
         this.isLoading = false;
       },
     });
@@ -93,10 +108,7 @@ export class PaymentResultComponent implements OnInit {
 
   // Get payment status message
   getStatusMessage(): string {
-    if (!this.callbackData) return '';
-    return this.vnpayService.getPaymentStatusMessage(
-      this.callbackData.vnp_ResponseCode
-    );
+    return this.paymentResult?.message || '';
   }
 
   // Format amount for display
@@ -141,5 +153,17 @@ export class PaymentResultComponent implements OnInit {
   // Print receipt (optional)
   printReceipt(): void {
     window.print();
+  }
+
+  // Get order ID (vnp_TxnRef) for display
+  getOrderId(): string {
+    return this.callbackData?.vnp_TxnRef || 'N/A';
+  }
+
+  // Check if order ID (vnp_TxnRef) is available
+  hasOrderId(): boolean {
+    return !!(
+      this.callbackData?.vnp_TxnRef && this.callbackData.vnp_TxnRef.trim()
+    );
   }
 }

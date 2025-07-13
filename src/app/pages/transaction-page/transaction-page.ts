@@ -66,6 +66,16 @@ export class Transaction implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  // Generate unique order ID
+  private generateOrderId(): string {
+    const timestamp = Date.now();
+    const randomSuffix = Math.random()
+      .toString(36)
+      .substring(2, 8)
+      .toUpperCase();
+    return `ORDER-${timestamp}-${randomSuffix}`;
+  }
+
   // Process VNPay payment
   processPayment(): void {
     if (!this.validateForm()) {
@@ -75,21 +85,29 @@ export class Transaction implements OnInit, OnDestroy {
     this.isProcessing = true;
     this.errorMessage = '';
 
+    // Generate unique order ID
+    const orderId = this.generateOrderId();
+    console.log('Generated Order ID for payment:', orderId);
+
     const paymentRequest: VNPayPaymentRequest = {
       amount: this.cart.total,
       orderInfo: this.cartService.generateOrderInfo(),
       patientId: this.customerInfo.email, // Using email as patient ID
       services: this.cart.items,
+      orderId: orderId, // Include generated order ID
     };
 
     this.vnpayService
       .createPayment(paymentRequest)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response) => {
+        next: (response: any) => {
           if (response.success && response.data?.paymentUrl) {
-            // Save transaction before redirecting
-            this.saveTransaction(response.data.orderId);
+            // Transaction is created by the VNPay edge function
+            console.log(
+              'Payment URL created for order:',
+              response.data.orderId
+            );
             // Redirect to VNPay
             window.location.href = response.data.paymentUrl;
           } else {
@@ -98,7 +116,7 @@ export class Transaction implements OnInit, OnDestroy {
             this.isProcessing = false;
           }
         },
-        error: (error) => {
+        error: (error: any) => {
           console.error('Payment creation error:', error);
           this.errorMessage =
             'Có lỗi xảy ra khi tạo thanh toán. Vui lòng thử lại.';
@@ -122,27 +140,6 @@ export class Transaction implements OnInit, OnDestroy {
       return false;
     }
     return true;
-  }
-
-  // Save transaction
-  private saveTransaction(orderId: string): void {
-    const transaction: PaymentTransaction = {
-      transaction_id: orderId,
-      cart_items: this.cart.items,
-      total_amount: this.cart.total,
-      payment_method: 'vnpay',
-      payment_status: 'pending',
-      order_info: this.cartService.generateOrderInfo(),
-    };
-
-    this.vnpayService.saveTransaction(transaction).subscribe({
-      next: (result) => {
-        console.log('Transaction saved:', result);
-      },
-      error: (error) => {
-        console.error('Error saving transaction:', error);
-      },
-    });
   }
 
   // Format price

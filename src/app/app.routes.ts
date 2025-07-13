@@ -18,6 +18,8 @@ import { Transaction } from './pages/transaction-page/transaction-page';
 import { CartComponent } from './components/cart/cart.component';
 import { PaymentResultComponent } from './pages/payment-result-page/payment-result-page.component';
 import { DashboardComponent } from './pages/dashboard-page/dashboard-page.component';
+import { AppointmentResultComponent } from './pages/appointment-result-page/appointment-result-page.component';
+import { PeriodTrackingComponent } from './pages/period-tracking-page/period-tracking-page.component';
 
 export const routes: Routes = [
   { path: '', component: HomePageComponent, data: { breadcrumb: 'Home' } },
@@ -39,6 +41,16 @@ export const routes: Routes = [
     component: AppointmentPageComponent,
     data: { breadcrumb: 'Appointment' },
     canDeactivate: [LeaveAppointmentGuard],
+  },
+  {
+    path: 'appointment-success',
+    component: AppointmentResultComponent,
+    data: { breadcrumb: 'Appointment Success' },
+  },
+  {
+    path: 'period-tracking',
+    component: PeriodTrackingComponent,
+    data: { breadcrumb: 'Period Tracking' },
   },
   {
     path: 'consultation',

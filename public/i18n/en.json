@@ -293,5 +293,84 @@
   },
   "BACK_TO_TOP": {
     "TITLE": "Back to Top"
+  },
+  "PERIOD": {
+    "TITLE": "Period Tracking",
+    "SUBTITLE": "Track your menstrual cycle and health insights",
+    "DASHBOARD": {
+      "CURRENT_CYCLE_DAY": "Day of Cycle",
+      "NEXT_PERIOD": "Next Period",
+      "DAYS_UNTIL": "in {{days}} days",
+      "CALCULATING": "Calculating...",
+      "AVERAGE_CYCLE": "Avg Cycle",
+      "PERIOD_LENGTH": "Period Length",
+      "TRACKING_CYCLES": "Tracking",
+      "DAYS": "days",
+      "CYCLES": "cycles"
+    },
+    "FORM": {
+      "LOG_PERIOD": "Log Period",
+      "START_DATE": "Start Date",
+      "END_DATE": "End Date (Optional)",
+      "FLOW_INTENSITY": "Flow Intensity",
+      "SYMPTOMS": "Symptoms",
+      "NOTES": "Notes",
+      "NOTES_PLACEHOLDER": "Any additional notes...",
+      "SAVE": "Save Period Data",
+      "SAVING": "Saving..."
+    },
+    "CALENDAR": {
+      "TITLE": "Calendar View",
+      "SUBTITLE": "Click on dates to log periods",
+      "PREVIOUS_MONTH": "Previous Month",
+      "NEXT_MONTH": "Next Month",
+      "LEGEND": "Calendar Legend",
+      "PERIOD_DAY": "Period",
+      "FERTILE_DAY": "Fertile",
+      "OVULATION_DAY": "Ovulation",
+      "PREDICTED_DAY": "Predicted"
+    },
+    "HISTORY": {
+      "TITLE": "Period History",
+      "RECENT_PERIODS": "Recent Periods",
+      "NO_DATA": "No period data logged yet",
+      "FLOW": "Flow",
+      "SYMPTOMS_COUNT": "{{count}} symptoms"
+    },
+    "FLOW": {
+      "LIGHT": "Light",
+      "MEDIUM": "Medium",
+      "HEAVY": "Heavy",
+      "VERY_HEAVY": "Very Heavy"
+    },
+    "SYMPTOMS": {
+      "CRAMPS": "Cramps",
+      "HEADACHE": "Headache",
+      "MOOD_SWINGS": "Mood Swings",
+      "BLOATING": "Bloating",
+      "BREAST_TENDERNESS": "Breast Tenderness",
+      "FATIGUE": "Fatigue",
+      "NAUSEA": "Nausea",
+      "BACK_PAIN": "Back Pain",
+      "ACNE": "Acne",
+      "FOOD_CRAVINGS": "Food Cravings",
+      "INSOMNIA": "Insomnia",
+      "DIARRHEA": "Diarrhea",
+      "CONSTIPATION": "Constipation",
+      "HOT_FLASHES": "Hot Flashes",
+      "DIZZINESS": "Dizziness"
+    },
+    "ERRORS": {
+      "LOAD_HISTORY_FAILED": "Failed to load period history",
+      "LOAD_STATS_FAILED": "Failed to load cycle statistics",
+      "START_DATE_REQUIRED": "Please select a start date",
+      "LOG_FAILED": "Failed to save period data",
+      "SAVE_FAILED": "Save failed, please try again"
+    },
+    "SUCCESS": {
+      "LOGGED": "Period data saved successfully",
+      "UPDATED": "Data updated successfully",
+      "DELETED": "Data deleted successfully"
+    }
   }
 }

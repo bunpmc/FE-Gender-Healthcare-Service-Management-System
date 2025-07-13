@@ -293,5 +293,84 @@
   },
   "BACK_TO_TOP": {
     "TITLE": "Lên đầu trang"
+  },
+  "PERIOD": {
+    "TITLE": "Theo dõi chu kỳ kinh nguyệt",
+    "SUBTITLE": "Theo dõi chu kỳ kinh nguyệt và thông tin sức khỏe",
+    "DASHBOARD": {
+      "CURRENT_CYCLE_DAY": "Ngày của chu kỳ",
+      "NEXT_PERIOD": "Kỳ kinh tiếp theo",
+      "DAYS_UNTIL": "trong {{days}} ngày",
+      "CALCULATING": "Đang tính toán...",
+      "AVERAGE_CYCLE": "Chu kỳ TB",
+      "PERIOD_LENGTH": "Thời gian kinh",
+      "TRACKING_CYCLES": "Chu kỳ theo dõi",
+      "DAYS": "ngày",
+      "CYCLES": "chu kỳ"
+    },
+    "FORM": {
+      "LOG_PERIOD": "Ghi nhận kinh nguyệt",
+      "START_DATE": "Ngày bắt đầu",
+      "END_DATE": "Ngày kết thúc (Tùy chọn)",
+      "FLOW_INTENSITY": "Cường độ kinh",
+      "SYMPTOMS": "Triệu chứng",
+      "NOTES": "Ghi chú",
+      "NOTES_PLACEHOLDER": "Ghi chú thêm...",
+      "SAVE": "Lưu dữ liệu kinh nguyệt",
+      "SAVING": "Đang lưu..."
+    },
+    "CALENDAR": {
+      "TITLE": "Lịch theo dõi",
+      "SUBTITLE": "Nhấp vào ngày để ghi nhận kinh nguyệt",
+      "PREVIOUS_MONTH": "Tháng trước",
+      "NEXT_MONTH": "Tháng sau",
+      "LEGEND": "Chú thích lịch",
+      "PERIOD_DAY": "Ngày có kinh",
+      "FERTILE_DAY": "Ngày dễ thụ thai",
+      "OVULATION_DAY": "Ngày rụng trứng",
+      "PREDICTED_DAY": "Dự đoán kinh"
+    },
+    "HISTORY": {
+      "TITLE": "Lịch sử kinh nguyệt",
+      "RECENT_PERIODS": "Kỳ kinh gần đây",
+      "NO_DATA": "Chưa có dữ liệu kinh nguyệt",
+      "FLOW": "Cường độ",
+      "SYMPTOMS_COUNT": "{{count}} triệu chứng"
+    },
+    "FLOW": {
+      "LIGHT": "Nhẹ",
+      "MEDIUM": "Vừa",
+      "HEAVY": "Nhiều",
+      "VERY_HEAVY": "Rất nhiều"
+    },
+    "SYMPTOMS": {
+      "CRAMPS": "Đau bụng kinh",
+      "HEADACHE": "Đau đầu",
+      "MOOD_SWINGS": "Thay đổi tâm trạng",
+      "BLOATING": "Đầy hơi",
+      "BREAST_TENDERNESS": "Đau ngực",
+      "FATIGUE": "Mệt mỏi",
+      "NAUSEA": "Buồn nôn",
+      "BACK_PAIN": "Đau lưng",
+      "ACNE": "Mụn trứng cá",
+      "FOOD_CRAVINGS": "Thèm ăn",
+      "INSOMNIA": "Mất ngủ",
+      "DIARRHEA": "Tiêu chảy",
+      "CONSTIPATION": "Táo bón",
+      "HOT_FLASHES": "Bốc hỏa",
+      "DIZZINESS": "Chóng mặt"
+    },
+    "ERRORS": {
+      "LOAD_HISTORY_FAILED": "Không thể tải lịch sử kinh nguyệt",
+      "LOAD_STATS_FAILED": "Không thể tải thống kê chu kỳ",
+      "START_DATE_REQUIRED": "Vui lòng chọn ngày bắt đầu",
+      "LOG_FAILED": "Không thể lưu dữ liệu kinh nguyệt",
+      "SAVE_FAILED": "Lưu thất bại, vui lòng thử lại"
+    },
+    "SUCCESS": {
+      "LOGGED": "Đã lưu dữ liệu kinh nguyệt thành công",
+      "UPDATED": "Đã cập nhật dữ liệu thành công",
+      "DELETED": "Đã xóa dữ liệu thành công"
+    }
   }
 }

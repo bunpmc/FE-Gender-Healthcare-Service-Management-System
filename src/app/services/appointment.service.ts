@@ -332,15 +332,16 @@ export class AppointmentService {
    */
   private mapScheduleToEnum(schedule: string): ScheduleEnum {
     const scheduleMap: { [key: string]: ScheduleEnum } = {
-      Morning: 'morning',
-      Afternoon: 'afternoon',
-      Evening: 'evening',
-      morning: 'morning',
-      afternoon: 'afternoon',
-      evening: 'evening',
+      Morning: ScheduleEnum.MORNING,
+      Afternoon: ScheduleEnum.AFTERNOON,
+      Evening: ScheduleEnum.EVENING,
+      morning: ScheduleEnum.MORNING,
+      afternoon: ScheduleEnum.AFTERNOON,
+      evening: ScheduleEnum.EVENING,
+      specific_time: ScheduleEnum.SPECIFIC_TIME,
     };
 
-    return scheduleMap[schedule] || 'morning';
+    return scheduleMap[schedule] || ScheduleEnum.SPECIFIC_TIME;
   }
 
   /**

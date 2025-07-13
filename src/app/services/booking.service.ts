@@ -1,15 +1,25 @@
 // ================== IMPORTS ==================
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { environment } from '../environments/environment';
-import { type TimeSlot, type DoctorSlotDetail } from '../models/booking.model';
+import {
+  type TimeSlot,
+  type DoctorSlotDetail,
+  type AppointmentCreateRequest,
+  type AppointmentResponse,
+  type Appointment,
+  type GuestAppointment,
+} from '../models/booking.model';
 import { Observable } from 'rxjs';
+import { AppointmentService } from './appointment.service';
 
 // ================== SERVICE DECORATOR ==================
 @Injectable({
   providedIn: 'root',
 })
 export class BookingService {
+  private appointmentService = inject(AppointmentService);
+
   // =========== CONSTRUCTOR ===========
   constructor(private http: HttpClient) {}
 
@@ -55,7 +65,7 @@ export class BookingService {
 
   // =========== BOOK APPOINTMENT ===========
   /**
-   * Đặt lịch hẹn mới
+   * Đặt lịch hẹn mới (legacy method - kept for backward compatibility)
    */
   bookAppointment(payload: any): Observable<any> {
     return this.http.post(
@@ -63,5 +73,33 @@ export class BookingService {
       payload,
       { headers: this.getHeaders() }
     );
+  }
+
+  // =========== CREATE APPOINTMENT (NEW METHOD) ===========
+  /**
+   * Create appointment using the new appointment service
+   * Handles both logged-in users and guests
+   */
+  createAppointment(
+    request: AppointmentCreateRequest
+  ): Observable<AppointmentResponse> {
+    return this.appointmentService.createAppointment(request);
+  }
+
+  // =========== GET APPOINTMENT DETAILS ===========
+  /**
+   * Get appointment details by ID
+   */
+  getAppointmentById(appointmentId: string): Observable<Appointment | null> {
+    return this.appointmentService.getAppointmentById(appointmentId);
+  }
+
+  /**
+   * Get guest appointment details by ID
+   */
+  getGuestAppointmentById(
+    guestAppointmentId: string
+  ): Observable<GuestAppointment | null> {
+    return this.appointmentService.getGuestAppointmentById(guestAppointmentId);
   }
 }

@@ -1,0 +1,476 @@
+<app-header />
+
+<main
+  class="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50"
+>
+  <div class="container mx-auto px-4 py-8">
+    <!-- ================== LOADING STATE ================== -->
+    @if (isLoading()) {
+    <div class="flex justify-center items-center py-20">
+      <div
+        class="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"
+      ></div>
+    </div>
+    }
+
+    <!-- ================== ERROR STATE ================== -->
+    @if (error()) {
+    <div
+      class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6"
+    >
+      {{ error() }}
+    </div>
+    }
+
+    <!-- ================== MAIN CONTENT ================== -->
+    @if (!isLoading()) {
+
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold text-gray-800 mb-2">
+        {{ "PERIOD.TITLE" | translate }}
+      </h1>
+      <p class="text-gray-600 text-lg">{{ "PERIOD.SUBTITLE" | translate }}</p>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
+      <!-- ================== LEFT COLUMN - DASHBOARD ================== -->
+      <div class="space-y-6">
+        <!-- Main Dashboard Card -->
+        <div
+          class="bg-gradient-to-br from-pink-400 via-purple-500 to-indigo-600 rounded-3xl p-8 text-white shadow-2xl"
+        >
+          <div class="text-center">
+            <!-- Cycle Ring -->
+            <div class="relative w-40 h-40 sm:w-48 sm:h-48 mx-auto mb-6">
+              <svg
+                class="w-full h-full transform -rotate-90 drop-shadow-lg"
+                viewBox="0 0 100 100"
+              >
+                <!-- Background circle -->
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="42"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.3)"
+                  stroke-width="6"
+                />
+                <!-- Progress circle -->
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="42"
+                  fill="none"
+                  stroke="white"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                  stroke-dasharray="264"
+                  [attr.stroke-dashoffset]="
+                    264 - (currentCycleDay / averageCycleLength) * 264
+                  "
+                  class="transition-all duration-1000 ease-out"
+                />
+                <!-- Inner glow circle -->
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="35"
+                  fill="rgba(255,255,255,0.1)"
+                  stroke="rgba(255,255,255,0.2)"
+                  stroke-width="1"
+                />
+              </svg>
+              <div
+                class="absolute inset-0 flex flex-col items-center justify-center"
+              >
+                <div class="text-3xl sm:text-4xl font-bold mb-1 text-shadow">
+                  {{ currentCycleDay }}
+                </div>
+                <div class="text-xs sm:text-sm opacity-90 font-medium">
+                  {{ "PERIOD.DASHBOARD.CURRENT_CYCLE_DAY" | translate }}
+                </div>
+                <div class="text-xs opacity-75 mt-1">
+                  {{ averageCycleLength }}
+                  {{ "PERIOD.DASHBOARD.DAYS" | translate }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Next Period Info -->
+            <div class="text-center">
+              <h3 class="text-xl font-semibold mb-2">
+                {{ "PERIOD.DASHBOARD.NEXT_PERIOD" | translate }}
+              </h3>
+              <p class="text-lg opacity-90">
+                @if (periodStats()) {
+                {{ formatDate(periodStats()!.nextPeriodDate) }}
+                } @else { {{ "PERIOD.DASHBOARD.CALCULATING" | translate }} }
+              </p>
+              <p class="text-sm opacity-75 mt-1">
+                @if (periodStats()) {
+                {{
+                  "PERIOD.DASHBOARD.DAYS_UNTIL"
+                    | translate : { days: periodStats()!.daysUntilNextPeriod }
+                }}
+                } @else { - }
+              </p>
+            </div>
+          </div>
+
+          <!-- Quick Stats -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-8">
+            <div
+              class="bg-white rounded-2xl p-4 text-center shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              <div class="text-xl sm:text-2xl font-bold text-pink-500 mb-1">
+                {{ averageCycleLength }}
+              </div>
+              <div class="text-xs sm:text-sm text-gray-600 font-medium">
+                {{ "PERIOD.DASHBOARD.AVERAGE_CYCLE" | translate }}
+              </div>
+              <div class="text-xs text-gray-400 mt-1">
+                {{ "PERIOD.DASHBOARD.DAYS" | translate }}
+              </div>
+            </div>
+            <div
+              class="bg-white rounded-2xl p-4 text-center shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              <div class="text-xl sm:text-2xl font-bold text-purple-500 mb-1">
+                {{ getPeriodLength() }}
+              </div>
+              <div class="text-xs sm:text-sm text-gray-600 font-medium">
+                {{ "PERIOD.DASHBOARD.PERIOD_LENGTH" | translate }}
+              </div>
+              <div class="text-xs text-gray-400 mt-1">
+                {{ "PERIOD.DASHBOARD.DAYS" | translate }}
+              </div>
+            </div>
+            <div
+              class="bg-white rounded-2xl p-4 text-center shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              <div class="text-xl sm:text-2xl font-bold text-blue-500 mb-1">
+                {{ getStreakDays() }}
+              </div>
+              <div class="text-xs sm:text-sm text-gray-600 font-medium">
+                {{ "PERIOD.DASHBOARD.TRACKING_CYCLES" | translate }}
+              </div>
+              <div class="text-xs text-gray-400 mt-1">
+                {{ "PERIOD.DASHBOARD.CYCLES" | translate }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Period Logging Form -->
+        <div class="bg-white rounded-3xl p-6 shadow-xl border border-gray-100">
+          <h3 class="text-xl font-semibold text-gray-800 mb-4">
+            {{ "PERIOD.FORM.LOG_PERIOD" | translate }}
+          </h3>
+
+          <form class="space-y-4">
+            <!-- Start Date -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                {{ "PERIOD.FORM.START_DATE" | translate }}
+              </label>
+              <input
+                type="date"
+                [(ngModel)]="logForm.start_date"
+                name="start_date"
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+              />
+            </div>
+
+            <!-- End Date -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                {{ "PERIOD.FORM.END_DATE" | translate }}
+              </label>
+              <input
+                type="date"
+                [(ngModel)]="logForm.end_date"
+                name="end_date"
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+              />
+            </div>
+
+            <!-- Flow Intensity -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                {{ "PERIOD.FORM.FLOW_INTENSITY" | translate }}
+              </label>
+              <div class="grid grid-cols-2 gap-2">
+                @for (intensity of FLOW_INTENSITIES; track intensity.value) {
+                <button
+                  type="button"
+                  (click)="logForm.flow_intensity = intensity.value"
+                  [class]="
+                    logForm.flow_intensity === intensity.value
+                      ? 'ring-2 ring-pink-500'
+                      : ''
+                  "
+                  [style.background-color]="intensity.color"
+                  class="px-4 py-2 rounded-lg text-white font-medium transition-all duration-200 hover:scale-105"
+                >
+                  {{ intensity.label }}
+                </button>
+                }
+              </div>
+            </div>
+
+            <!-- Symptoms -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                {{ "PERIOD.FORM.SYMPTOMS" | translate }}
+              </label>
+              <div class="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+                @for (symptom of PERIOD_SYMPTOMS; track symptom) {
+                <label
+                  class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-50"
+                >
+                  <input
+                    type="checkbox"
+                    [value]="symptom"
+                    [checked]="logForm.symptoms?.includes(symptom)"
+                    (change)="toggleSymptom(symptom)"
+                    class="rounded border-gray-300 text-pink-500 focus:ring-pink-500"
+                  />
+                  <span class="text-sm text-gray-700">{{
+                    getSymptomDisplayName(symptom)
+                  }}</span>
+                </label>
+                }
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                {{ "PERIOD.FORM.NOTES" | translate }}
+              </label>
+              <textarea
+                [(ngModel)]="logForm.period_description"
+                name="notes"
+                rows="3"
+                [placeholder]="'PERIOD.FORM.NOTES_PLACEHOLDER' | translate"
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+              ></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <button
+              type="button"
+              (click)="savePeriodData()"
+              [disabled]="isLoading() || !logForm.start_date"
+              class="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-semibold py-4 px-6 rounded-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+            >
+              @if (isLoading()) {
+              <div class="flex items-center justify-center space-x-2">
+                <div
+                  class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"
+                ></div>
+                <span>{{ "PERIOD.FORM.SAVING" | translate }}</span>
+              </div>
+              } @else {
+              <span>{{ "PERIOD.FORM.SAVE" | translate }}</span>
+              }
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- ================== RIGHT COLUMN - CALENDAR ================== -->
+      <div class="space-y-6">
+        <!-- Calendar -->
+        <div class="bg-white rounded-3xl p-6 shadow-xl border border-gray-100">
+          <div class="text-center mb-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">
+              {{ "PERIOD.CALENDAR.TITLE" | translate }}
+            </h3>
+            <p class="text-sm text-gray-600">
+              {{ "PERIOD.CALENDAR.SUBTITLE" | translate }}
+            </p>
+          </div>
+
+          <!-- Calendar Header -->
+          <div class="flex items-center justify-between mb-4">
+            <button
+              (click)="previousMonth()"
+              class="p-3 rounded-full hover:bg-gray-100 transition-colors shadow-sm border border-gray-200"
+              [title]="'PERIOD.CALENDAR.PREVIOUS_MONTH' | translate"
+            >
+              <svg
+                class="w-5 h-5 text-gray-600"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </button>
+            <h4
+              class="text-xl font-bold text-gray-800 px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-200"
+            >
+              {{ getMonthYearDisplay() }}
+            </h4>
+            <button
+              (click)="nextMonth()"
+              class="p-3 rounded-full hover:bg-gray-100 transition-colors shadow-sm border border-gray-200"
+              [title]="'PERIOD.CALENDAR.NEXT_MONTH' | translate"
+            >
+              <svg
+                class="w-5 h-5 text-gray-600"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Calendar Days Header -->
+          <div class="grid grid-cols-7 gap-1 mb-2">
+            @for (day of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            track day) {
+            <div class="text-center text-sm font-medium text-gray-500 py-2">
+              {{ day }}
+            </div>
+            }
+          </div>
+
+          <!-- Calendar Days -->
+          <div class="grid grid-cols-7 gap-1 sm:gap-2">
+            @for (day of calendarDays(); track day.dateString) {
+            <div>
+              <button
+                (click)="onCalendarDayClick(day)"
+                [class]="getCalendarDayClasses(day)"
+                class="aspect-square flex items-center justify-center text-xs sm:text-sm font-medium rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                [title]="day.dateString"
+              >
+                <span class="relative z-10">{{ day.dayNumber }}</span>
+                @if (day.isPeriodDay) {
+                <div
+                  class="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-white rounded-full shadow-sm"
+                ></div>
+                } @if (day.isFertileDay && !day.isPeriodDay) {
+                <div
+                  class="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-white rounded-full shadow-sm"
+                ></div>
+                } @if (day.isOvulationDay && !day.isPeriodDay) {
+                <div
+                  class="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full shadow-sm border border-yellow-300"
+                ></div>
+                } @if (day.isPredictedPeriod && !day.isPeriodDay) {
+                <div
+                  class="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-pink-600 rounded-full shadow-sm"
+                ></div>
+                }
+              </button>
+            </div>
+            }
+          </div>
+
+          <!-- Calendar Legend -->
+          <div
+            class="mt-6 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200"
+          >
+            <h5 class="text-sm font-semibold text-gray-700 mb-4 text-center">
+              {{ "PERIOD.CALENDAR.LEGEND" | translate }}
+            </h5>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+              <div
+                class="flex items-center space-x-2 bg-white p-2 rounded-lg shadow-sm"
+              >
+                <div class="w-3 h-3 bg-red-500 rounded-full shadow-sm"></div>
+                <span class="text-gray-700 font-medium">{{
+                  "PERIOD.CALENDAR.PERIOD_DAY" | translate
+                }}</span>
+              </div>
+              <div
+                class="flex items-center space-x-2 bg-white p-2 rounded-lg shadow-sm"
+              >
+                <div class="w-3 h-3 bg-green-500 rounded-full shadow-sm"></div>
+                <span class="text-gray-700 font-medium">{{
+                  "PERIOD.CALENDAR.FERTILE_DAY" | translate
+                }}</span>
+              </div>
+              <div
+                class="flex items-center space-x-2 bg-white p-2 rounded-lg shadow-sm"
+              >
+                <div
+                  class="w-3 h-3 bg-yellow-500 rounded-full shadow-sm border border-yellow-300"
+                ></div>
+                <span class="text-gray-700 font-medium">{{
+                  "PERIOD.CALENDAR.OVULATION_DAY" | translate
+                }}</span>
+              </div>
+              <div
+                class="flex items-center space-x-2 bg-white p-2 rounded-lg shadow-sm"
+              >
+                <div
+                  class="w-3 h-3 bg-pink-300 border-2 border-pink-500 border-dashed rounded-full"
+                ></div>
+                <span class="text-gray-700 font-medium">{{
+                  "PERIOD.CALENDAR.PREDICTED_DAY" | translate
+                }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Period History -->
+        <div class="bg-white rounded-3xl p-6 shadow-xl border border-gray-100">
+          <h3 class="text-xl font-semibold text-gray-800 mb-4">
+            {{ "PERIOD.HISTORY.RECENT_PERIODS" | translate }}
+          </h3>
+
+          @if (periodHistory().length > 0) {
+          <div class="space-y-3">
+            @for (period of periodHistory().slice(0, 3); track period.period_id)
+            {
+            <div class="p-4 bg-gray-50 rounded-xl">
+              <div class="flex justify-between items-start">
+                <div>
+                  <p class="font-medium text-gray-800">
+                    {{ formatDate(period.start_date) }}
+                    @if (period.end_date) { - {{ formatDate(period.end_date) }}
+                    }
+                  </p>
+                  <p class="text-sm text-gray-600 mt-1">
+                    {{ "PERIOD.HISTORY.FLOW" | translate }}:
+                    {{ period.flow_intensity }} @if (period.symptoms &&
+                    period.symptoms.length > 0) { •
+                    {{
+                      "PERIOD.HISTORY.SYMPTOMS_COUNT"
+                        | translate : { count: period.symptoms.length }
+                    }}
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+            }
+          </div>
+          } @else {
+          <p class="text-gray-500 text-center py-8">
+            {{ "PERIOD.HISTORY.NO_DATA" | translate }}
+          </p>
+          }
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+</main>
+
+<app-footer />
