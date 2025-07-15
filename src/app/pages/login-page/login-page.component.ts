@@ -107,26 +107,61 @@ export class LoginComponent {
     this.isSubmitting = true;
     this.formSubmitted = true;
     this.errorMsg = '';
+
+    console.log('🚀 LOGIN COMPONENT - Form submission started');
+    console.log('📋 Form valid:', formData.valid);
+    console.log('📋 Form errors:', formData.errors);
+    console.log('📋 Full form value:', formData.form.value);
+
     if (formData.valid) {
-      console.log(formData.valid);
       // --- Lấy giá trị từ form ---
       const phone: UserLogin['phone'] = formData.form.value.phone;
       const password: UserLogin['password'] = formData.form.value.password;
       const rememberMe = formData.form.value.rememberMe;
 
+      console.log('📱 Phone from form:', phone);
+      console.log('🔒 Password from form (length):', password.length);
+      console.log(
+        '🔒 Password from form (first 2 chars):',
+        password.substring(0, 2) + '***'
+      );
+      console.log('💾 Remember me:', rememberMe);
+      console.log('📊 Form data type check:');
+      console.log('  - phone type:', typeof phone);
+      console.log('  - password type:', typeof password);
+      console.log('  - rememberMe type:', typeof rememberMe);
+
       // --- Gọi API login ---
+      console.log('🔄 Calling authService.loginWithPhone...');
       const subscription = this.authService
         .loginWithPhone(phone, password)
         .subscribe({
           next: (res: any) => {
+            console.log('✅ LOGIN COMPONENT - Success response received');
+            console.log('📦 Full response object:', res);
+            console.log('📦 Response type:', typeof res);
+            console.log('📦 Response keys:', Object.keys(res || {}));
+
             // --- Lấy token từ response (tùy BE) ---
             const token =
               res.access_token ||
               (res.data && res.data.access_token) ||
               res.token;
+
+            console.log('🎫 Token extraction:');
+            console.log('  - res.access_token:', res.access_token);
+            console.log('  - res.data?.access_token:', res.data?.access_token);
+            console.log('  - res.token:', res.token);
+            console.log(
+              '  - Final token:',
+              token ? token.substring(0, 20) + '...' : 'null'
+            );
+
             if (token) {
+              console.log('💾 Token found, processing storage...');
               // --- Xử lý lưu token + remember me ---
               if (rememberMe) {
+                console.log('💾 Saving to localStorage (Remember Me = true)');
                 this.tokenService.setToken(token); // Lưu vào localStorage
                 localStorage.setItem(
                   'Remember-login-form',
@@ -138,30 +173,48 @@ export class LoginComponent {
                 );
                 sessionStorage.removeItem('access_token');
               } else {
+                console.log(
+                  '💾 Saving to sessionStorage (Remember Me = false)'
+                );
                 this.tokenService.setTokenSession(token); // Lưu vào sessionStorage
                 localStorage.removeItem('Remember-login-form');
                 localStorage.removeItem('save-login-form');
                 localStorage.removeItem('access_token');
               }
+              console.log('🏠 Navigating to home page...');
               // --- Chuyển hướng về trang chủ ---
               this.router.navigate(['/']);
               // formData.resetForm(); // (optional) Reset form sau login
+            } else {
+              console.log('❌ No token found in response!');
             }
           },
           error: (err: any) => {
+            console.log('❌ LOGIN COMPONENT - Error response received');
+            console.log('📦 Full error object:', err);
+            console.log('📦 Error status:', err.status);
+            console.log('📦 Error statusText:', err.statusText);
+            console.log('📦 Error message:', err.message);
+            console.log('📦 Error body:', err.error);
+            console.log('📦 Error headers:', err.headers);
+            console.log('📦 Error url:', err.url);
+
             // --- Xử lý lỗi ---
             if (err.status === 401) {
+              console.log('🔒 401 Unauthorized - Invalid credentials');
               this.errorMsg = this.translate.instant(
                 'LOGIN.ERRORS.INVALID_CREDENTIALS'
               );
               this.isWrong = true;
               alert(this.errorMsg);
             } else if (err.status === 500) {
+              console.log('🔥 500 Server Error');
               this.errorMsg = this.translate.instant(
                 'LOGIN.ERRORS.SERVER_ERROR'
               );
               alert(this.errorMsg);
             } else {
+              console.log('❓ Other error status:', err.status);
               this.errorMsg = this.translate.instant(
                 'LOGIN.ERRORS.LOGIN_FAILED'
               );
@@ -170,11 +223,25 @@ export class LoginComponent {
             this.isSubmitting = false;
           },
           complete: () => {
+            console.log('🏁 LOGIN COMPONENT - Request completed');
             this.isSubmitting = false;
           },
         });
       this.destroyRef.onDestroy(() => subscription?.unsubscribe());
     } else {
+      console.log('❌ LOGIN COMPONENT - Form is invalid');
+      console.log('📋 Form errors:', formData.errors);
+      console.log('📋 Form controls status:');
+      Object.keys(formData.controls).forEach((key) => {
+        const control = formData.controls[key];
+        console.log(`  - ${key}:`, {
+          value: control.value,
+          valid: control.valid,
+          errors: control.errors,
+          touched: control.touched,
+          dirty: control.dirty,
+        });
+      });
       this.formSubmitted = true;
       this.isSubmitting = false;
       return;

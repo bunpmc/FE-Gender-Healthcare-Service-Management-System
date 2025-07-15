@@ -358,10 +358,11 @@ export class AppointmentPageComponent implements OnInit {
       phone: this.getFullPhoneNumber(),
       email: this.booking.email || '',
       gender: this.booking.gender || 'other',
+      date_of_birth: this.booking.dateOfBirth || '1990-01-01', // Default if not provided
 
       // Medical information
       visit_type: 'consultation',
-      schedule: 'specific_time',
+      schedule: this.mapScheduleForEdgeFunction(),
       message: this.booking.message || '',
 
       // Doctor and service
@@ -812,6 +813,26 @@ export class AppointmentPageComponent implements OnInit {
     } else {
       this.router.navigate(['/']);
     }
+  }
+
+  // ========== SCHEDULE MAPPING ==========
+  private mapScheduleForEdgeFunction(): string {
+    // Map the selected time slot to appropriate schedule
+    if (this.booking.preferred_time) {
+      const time = this.booking.preferred_time;
+      const hour = parseInt(time.split(':')[0]);
+
+      if (hour >= 8 && hour < 13) {
+        return 'Morning';
+      } else if (hour >= 13 && hour < 18) {
+        return 'Afternoon';
+      } else {
+        return 'Evening';
+      }
+    }
+
+    // Default to Morning if no specific time
+    return 'Morning';
   }
 
   // ========== REMOVED SUBMIT BOOKING ==========

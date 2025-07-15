@@ -174,26 +174,54 @@
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">
                 {{ "PERIOD.FORM.START_DATE" | translate }}
+                <span class="text-red-500">*</span>
               </label>
               <input
                 type="date"
                 [(ngModel)]="logForm.start_date"
                 name="start_date"
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                (change)="onFormFieldChange()"
+                [max]="getTodayDateString()"
+                [class]="
+                  formValidation().errors['start_date']
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-pink-500'
+                "
+                class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent transition-colors"
+                required
               />
+              @if (formValidation().errors['start_date']) {
+              <p class="mt-1 text-sm text-red-600">
+                {{ formValidation().errors["start_date"] }}
+              </p>
+              }
             </div>
 
             <!-- End Date -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">
                 {{ "PERIOD.FORM.END_DATE" | translate }}
+                <span class="text-gray-400 text-xs">(Optional)</span>
               </label>
               <input
                 type="date"
                 [(ngModel)]="logForm.end_date"
                 name="end_date"
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                (change)="onFormFieldChange()"
+                [min]="logForm.start_date"
+                [max]="getTodayDateString()"
+                [class]="
+                  formValidation().errors['end_date']
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-pink-500'
+                "
+                class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent transition-colors"
               />
+              @if (formValidation().errors['end_date']) {
+              <p class="mt-1 text-sm text-red-600">
+                {{ formValidation().errors["end_date"] }}
+              </p>
+              }
             </div>
 
             <!-- Flow Intensity -->
@@ -249,21 +277,45 @@
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">
                 {{ "PERIOD.FORM.NOTES" | translate }}
+                <span class="text-gray-400 text-xs">(Optional)</span>
               </label>
               <textarea
                 [(ngModel)]="logForm.period_description"
                 name="notes"
                 rows="3"
+                maxlength="500"
+                (input)="onFormFieldChange()"
                 [placeholder]="'PERIOD.FORM.NOTES_PLACEHOLDER' | translate"
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                [class]="
+                  formValidation().errors['period_description']
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-pink-500'
+                "
+                class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent transition-colors resize-none"
               ></textarea>
+              <div class="flex justify-between items-center mt-1">
+                @if (formValidation().errors['period_description']) {
+                <p class="text-sm text-red-600">
+                  {{ formValidation().errors["period_description"] }}
+                </p>
+                } @else {
+                <span></span>
+                }
+                <span class="text-xs text-gray-400">
+                  {{ (logForm.period_description || "").length }}/500
+                </span>
+              </div>
             </div>
 
             <!-- Submit Button -->
             <button
               type="button"
               (click)="savePeriodData()"
-              [disabled]="isLoading() || !logForm.start_date"
+              [disabled]="
+                formState().isSubmitting ||
+                !logForm.start_date ||
+                !formValidation().isValid
+              "
               class="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-semibold py-4 px-6 rounded-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
             >
               @if (isLoading()) {

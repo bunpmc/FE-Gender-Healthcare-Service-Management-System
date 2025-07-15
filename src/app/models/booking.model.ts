@@ -14,6 +14,7 @@ export interface BookingState {
   phone?: string;
   phoneRegion?: string;
   gender?: 'male' | 'female' | 'other';
+  dateOfBirth?: string; // Added date of birth field
   message?: string;
   doctor_id?: string;
   service_id?: string;
@@ -79,6 +80,7 @@ export interface AppointmentCreateRequest {
   phone: string;
   email?: string;
   gender?: 'male' | 'female' | 'other';
+  date_of_birth?: string; // Added date of birth field
 
   // Medical information
   visit_type: VisitTypeEnum;

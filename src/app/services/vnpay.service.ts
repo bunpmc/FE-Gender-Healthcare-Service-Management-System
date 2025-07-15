@@ -55,6 +55,7 @@ export class VnpayService {
     'https://xzxxodxplyetecrsbxmc.supabase.co/functions/v1/vnpay-payment';
   private readonly vnpayCallbackUrl =
     'https://xzxxodxplyetecrsbxmc.supabase.co/functions/v1/vnpay-callback';
+  private readonly vnp_TmnCode = '4Q0AGO8S'; // Must match vnpay-callback and vnpay-payment config
 
   constructor(private http: HttpClient) {}
 
@@ -90,7 +91,7 @@ export class VnpayService {
     // Validate required parameters
     if (!this.validateCallbackData(callbackData)) {
       throw new Error(
-        'Invalid VNPay callback data: Missing required parameters'
+        'Invalid VNPay callback data: Missing or invalid required parameters'
       );
     }
 
@@ -108,9 +109,6 @@ export class VnpayService {
       vnp_TransactionStatus: callbackData.vnp_TransactionStatus,
       vnp_TxnRef: callbackData.vnp_TxnRef,
       vnp_SecureHash: callbackData.vnp_SecureHash,
-      // Include optional parameters if present
-      ...(callbackData.txnRef && { txnRef: callbackData.txnRef }),
-      ...(callbackData.orderId && { orderId: callbackData.orderId }),
     };
 
     console.log('Payload being sent to VNPay callback edge function:', payload);
@@ -171,8 +169,8 @@ export class VnpayService {
 
   // Format amount for VNPay (VNPay requires amount in VND without decimal)
   formatAmountForVNPay(amount: number): number {
-    // VNPay expects amount in VND cents (multiply by 100)
-    return Math.round(amount * 100);
+    // VNPay expects amount in VND without decimals (amount is already in VND)
+    return Math.round(amount);
   }
 
   // Validate VNPay callback data
@@ -182,6 +180,7 @@ export class VnpayService {
       'vnp_ResponseCode',
       'vnp_TxnRef',
       'vnp_SecureHash',
+      'vnp_TmnCode',
     ];
 
     for (const field of requiredFields) {
@@ -189,6 +188,14 @@ export class VnpayService {
         console.error(`Missing required VNPay parameter: ${field}`);
         return false;
       }
+    }
+
+    // Validate vnp_TmnCode matches expected value
+    if (callbackData.vnp_TmnCode !== this.vnp_TmnCode) {
+      console.error(
+        `Invalid vnp_TmnCode: expected ${this.vnp_TmnCode}, received ${callbackData.vnp_TmnCode}`
+      );
+      return false;
     }
 
     return true;
@@ -210,12 +217,8 @@ export class VnpayService {
         vnp_TmnCode: queryParams['vnp_TmnCode'] || '',
         vnp_TransactionNo: queryParams['vnp_TransactionNo'] || '',
         vnp_TransactionStatus: queryParams['vnp_TransactionStatus'] || '',
-        vnp_TxnRef: queryParams['vnp_TxnRef'] || queryParams['txnRef'] || '',
+        vnp_TxnRef: queryParams['vnp_TxnRef'] || '',
         vnp_SecureHash: queryParams['vnp_SecureHash'] || '',
-        // Optional parameters
-        txnRef: queryParams['txnRef'] || queryParams['vnp_TxnRef'] || undefined,
-        orderId:
-          queryParams['orderId'] || queryParams['vnp_TxnRef'] || undefined,
       };
 
       console.log('Parsed callback data from query parameters:', callbackData);
@@ -226,6 +229,13 @@ export class VnpayService {
       }
       if (!callbackData.vnp_SecureHash) {
         console.warn('No vnp_SecureHash found in callback query parameters');
+      }
+      if (!callbackData.vnp_TmnCode) {
+        console.warn('No vnp_TmnCode found in callback query parameters');
+      } else if (callbackData.vnp_TmnCode !== this.vnp_TmnCode) {
+        console.warn(
+          `Invalid vnp_TmnCode: expected ${this.vnp_TmnCode}, received ${callbackData.vnp_TmnCode}`
+        );
       }
 
       return callbackData;
@@ -251,14 +261,8 @@ export class VnpayService {
         vnp_TmnCode: urlParams.get('vnp_TmnCode') || '',
         vnp_TransactionNo: urlParams.get('vnp_TransactionNo') || '',
         vnp_TransactionStatus: urlParams.get('vnp_TransactionStatus') || '',
-        vnp_TxnRef:
-          urlParams.get('vnp_TxnRef') || urlParams.get('txnRef') || '',
+        vnp_TxnRef: urlParams.get('vnp_TxnRef') || '',
         vnp_SecureHash: urlParams.get('vnp_SecureHash') || '',
-        // Optional parameters
-        txnRef:
-          urlParams.get('txnRef') || urlParams.get('vnp_TxnRef') || undefined,
-        orderId:
-          urlParams.get('orderId') || urlParams.get('vnp_TxnRef') || undefined,
       };
 
       console.log('Parsed callback data from URL:', callbackData);
@@ -269,6 +273,13 @@ export class VnpayService {
       }
       if (!callbackData.vnp_SecureHash) {
         console.warn('No vnp_SecureHash found in callback URL parameters');
+      }
+      if (!callbackData.vnp_TmnCode) {
+        console.warn('No vnp_TmnCode found in callback URL parameters');
+      } else if (callbackData.vnp_TmnCode !== this.vnp_TmnCode) {
+        console.warn(
+          `Invalid vnp_TmnCode: expected ${this.vnp_TmnCode}, received ${callbackData.vnp_TmnCode}`
+        );
       }
 
       return callbackData;

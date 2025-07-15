@@ -11,6 +11,7 @@ import {
   catchError,
   of,
   finalize,
+  tap,
 } from 'rxjs';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Patient, DashboardPatient } from '../models/patient.model';
@@ -110,18 +111,43 @@ export class AuthService {
 
   // =========== LOGIN ===========
   loginWithPhone(phone: string, password: string) {
+    console.log('🔐 AUTH SERVICE - LOGIN REQUEST STARTED');
+    console.log('📱 Original phone input:', phone);
+
     const formattedPhone = phone.startsWith('0')
       ? '+84' + phone.slice(1)
       : phone;
+
+    console.log('📱 Formatted phone:', formattedPhone);
 
     const body: UserLogin = {
       phone: formattedPhone,
       password,
     };
 
-    return this.http.post(`${environment.apiEndpoint}/login`, body, {
-      headers: this.getHeaders(),
-    });
+    const headers = this.getHeaders();
+    const endpoint = `${environment.apiEndpoint}/login`;
+
+    console.log('🌐 Login endpoint:', endpoint);
+    console.log('📦 Request body:', JSON.stringify(body, null, 2));
+    console.log('📋 Request headers:', headers);
+    console.log('🔒 Password length:', password.length);
+    console.log('🔒 Password starts with:', password.substring(0, 2) + '***');
+
+    return this.http.post(endpoint, body, { headers }).pipe(
+      tap({
+        next: (response) => {
+          console.log('✅ LOGIN SUCCESS - Response received:', response);
+        },
+        error: (error) => {
+          console.log('❌ LOGIN ERROR - Error details:');
+          console.log('Status:', error.status);
+          console.log('Status Text:', error.statusText);
+          console.log('Error Body:', error.error);
+          console.log('Full Error Object:', error);
+        },
+      })
+    );
   }
 
   // ================== FORGOT PASSWORD (GỬI OTP) ==================

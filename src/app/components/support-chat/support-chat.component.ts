@@ -50,7 +50,7 @@ export class SupportChatComponent implements AfterViewChecked, OnDestroy {
   private destroy$ = new Subject<void>();
   private shouldScrollToBottom = false;
   private messageIdCounter = 0;
-  private readonly API_BASE_URL = 'https://0cae-14-169-234-113.ngrok-free.app';
+  private readonly API_BASE_URL = 'https://8dbff9af74e4.ngrok-free.app';
 
   constructor(
     private http: HttpClient,

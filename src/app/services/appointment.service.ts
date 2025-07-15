@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, from, map, catchError, of, switchMap } from 'rxjs';
+import { Observable, from, map, catchError, of, switchMap, tap } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
@@ -20,7 +21,7 @@ export class AppointmentService {
   private supabase: SupabaseClient;
   private authService = inject(AuthService);
 
-  constructor() {
+  constructor(private http: HttpClient) {
     console.log('🔧 Initializing AppointmentService...');
     console.log('🔧 Supabase URL:', environment.supabaseUrl);
     console.log(
@@ -42,42 +43,159 @@ export class AppointmentService {
   createAppointment(
     request: AppointmentCreateRequest
   ): Observable<AppointmentResponse> {
-    console.log('🚀 Starting appointment creation process...');
+    console.log(
+      '🚀 APPOINTMENT SERVICE - Starting appointment creation process...'
+    );
     console.log('📋 Request data:', JSON.stringify(request, null, 2));
 
-    return this.authService.currentUser$.pipe(
-      switchMap((currentUser) => {
-        console.log('👤 Current user:', currentUser ? 'Logged in' : 'Guest');
-        console.log('👤 User details:', currentUser);
+    // Convert Vietnamese phone to E.164 format
+    const e164Phone = this.convertToE164(request.phone);
+    console.log('📱 Phone converted to E.164:', e164Phone);
 
-        if (currentUser && currentUser.patientId) {
-          console.log(
-            '✅ Creating appointment for logged-in user with patient ID:',
-            currentUser.patientId
-          );
-          return from(
-            this.createUserAppointment(request, currentUser.patientId)
-          );
-        } else {
-          console.log('✅ Creating appointment for guest user');
-          return from(this.createGuestAppointment(request));
-        }
-      }),
-      catchError((error) => {
-        console.error('❌ CRITICAL ERROR in createAppointment:', error);
-        console.error('❌ Error details:', {
-          message: error.message,
-          stack: error.stack,
-          name: error.name,
-        });
-        return of({
-          success: false,
-          message: `Appointment creation failed: ${
-            error.message || 'Unknown error'
-          }`,
-        });
-      })
-    );
+    // Map schedule to the format expected by edge function
+    const schedule = this.mapScheduleToEdgeFunction(request.schedule);
+    console.log('📅 Mapped schedule:', schedule);
+
+    // Prepare payload for edge function
+    const payload = {
+      email: request.email || null,
+      fullName: request.full_name,
+      message: request.message,
+      phone: e164Phone,
+      schedule: schedule,
+      gender: request.gender || 'other',
+      date_of_birth: request.date_of_birth || '1990-01-01', // Default if not provided
+      doctor_id: request.doctor_id,
+      preferred_date: request.preferred_date || null,
+      preferred_time: request.preferred_time || null,
+      preferred_slot_id: request.slot_id || null,
+      visit_type: request.visit_type || 'consultation',
+    };
+
+    console.log('🌐 APPOINTMENT SERVICE - Calling edge function with payload:');
+    console.log('📦 Payload:', JSON.stringify(payload, null, 2));
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+
+    return this.http
+      .post<any>(
+        'https://xzxxodxplyetecrsbxmc.supabase.co/functions/v1/create-appointment',
+        payload,
+        { headers }
+      )
+      .pipe(
+        tap({
+          next: (response) => {
+            console.log(
+              '✅ APPOINTMENT SERVICE - Edge function success response:',
+              response
+            );
+            console.log('📦 Response data:', response.data);
+            console.log('📝 Response message:', response.message);
+          },
+          error: (error) => {
+            console.log('❌ APPOINTMENT SERVICE - Edge function error:', error);
+            console.log('📦 Error status:', error.status);
+            console.log('📦 Error body:', error.error);
+          },
+        }),
+        map((response) => {
+          // Transform edge function response to AppointmentResponse format
+          if (response.success) {
+            return {
+              success: true,
+              message: response.message,
+              data: {
+                appointment: response.data.appointment,
+                slot_info: response.data.slot_info,
+                notifications: response.data.notifications,
+              },
+            };
+          } else {
+            return {
+              success: false,
+              message: response.error || 'Appointment creation failed',
+            };
+          }
+        }),
+        catchError((error) => {
+          console.error('❌ APPOINTMENT SERVICE - HTTP Error:', error);
+
+          let errorMessage = 'Appointment creation failed. Please try again.';
+
+          if (error.status === 400 && error.error?.error) {
+            errorMessage = error.error.error;
+          } else if (error.status === 500) {
+            errorMessage = 'Server error. Please try again later.';
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+
+          return of({
+            success: false,
+            message: errorMessage,
+            details: error.error?.details || null,
+          });
+        })
+      );
+  }
+
+  /**
+   * Convert Vietnamese phone number to E.164 format
+   */
+  private convertToE164(phone: string): string {
+    console.log('📱 Converting phone to E.164:', phone);
+
+    // Remove any spaces or formatting
+    const cleanPhone = phone.replace(/\s/g, '');
+
+    // If it starts with 0, replace with +84
+    if (cleanPhone.startsWith('0')) {
+      const result = '+84' + cleanPhone.substring(1);
+      console.log('📱 Converted 0xxx to E.164:', result);
+      return result;
+    }
+
+    // If it already starts with +84, return as is
+    if (cleanPhone.startsWith('+84')) {
+      console.log('📱 Already in E.164 format:', cleanPhone);
+      return cleanPhone;
+    }
+
+    // If it starts with 84, add +
+    if (cleanPhone.startsWith('84')) {
+      const result = '+' + cleanPhone;
+      console.log('📱 Added + to 84xxx:', result);
+      return result;
+    }
+
+    // Default: assume it's a Vietnamese number without country code
+    const result = '+84' + cleanPhone;
+    console.log('📱 Default conversion to E.164:', result);
+    return result;
+  }
+
+  /**
+   * Map schedule from frontend format to edge function format
+   */
+  private mapScheduleToEdgeFunction(schedule: string): string {
+    console.log('📅 Mapping schedule:', schedule);
+
+    const scheduleMap: { [key: string]: string } = {
+      morning: 'Morning',
+      afternoon: 'Afternoon',
+      evening: 'Evening',
+      specific_time: 'Morning', // Default to Morning if specific time
+      Morning: 'Morning',
+      Afternoon: 'Afternoon',
+      Evening: 'Evening',
+    };
+
+    const mapped = scheduleMap[schedule] || 'Morning';
+    console.log('📅 Mapped schedule result:', mapped);
+    return mapped;
   }
 
   /**

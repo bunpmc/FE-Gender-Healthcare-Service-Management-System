@@ -26,10 +26,10 @@ export interface PeriodStats {
 
 export interface PeriodTrackingRequest {
   start_date: string;
-  end_date?: string;
+  end_date?: string | null;
   symptoms?: PeriodSymptom[];
   flow_intensity: FlowIntensity;
-  period_description?: string;
+  period_description?: string | null;
 }
 
 export interface PeriodTrackingResponse {
@@ -37,6 +37,23 @@ export interface PeriodTrackingResponse {
   message: string;
   period_id?: string;
   period_details?: PeriodEntry;
+}
+
+export interface PeriodFormValidation {
+  isValid: boolean;
+  errors: {
+    start_date?: string;
+    end_date?: string;
+    flow_intensity?: string;
+    symptoms?: string;
+    period_description?: string;
+  };
+}
+
+export interface PeriodFormState {
+  isSubmitting: boolean;
+  isDirty: boolean;
+  validation: PeriodFormValidation;
 }
 
 export interface CalendarDay {
@@ -208,4 +225,129 @@ export function getFlowIntensityColor(intensity: FlowIntensity): string {
   };
 
   return colors[intensity] || colors.medium;
+}
+
+// ========== FORM VALIDATION FUNCTIONS ==========
+
+export function validatePeriodForm(
+  form: PeriodTrackingRequest
+): PeriodFormValidation {
+  const errors: PeriodFormValidation['errors'] = {};
+  let isValid = true;
+
+  // Validate start date
+  if (!form.start_date || form.start_date.trim() === '') {
+    errors.start_date = 'Start date is required';
+    isValid = false;
+  } else {
+    const startDate = new Date(form.start_date);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); // End of today
+
+    if (isNaN(startDate.getTime())) {
+      errors.start_date = 'Invalid start date format';
+      isValid = false;
+    } else if (startDate > today) {
+      errors.start_date = 'Start date cannot be in the future';
+      isValid = false;
+    }
+  }
+
+  // Validate end date if provided
+  if (form.end_date && form.end_date.trim() !== '') {
+    const endDate = new Date(form.end_date);
+    const startDate = new Date(form.start_date);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+
+    if (isNaN(endDate.getTime())) {
+      errors.end_date = 'Invalid end date format';
+      isValid = false;
+    } else if (endDate > today) {
+      errors.end_date = 'End date cannot be in the future';
+      isValid = false;
+    } else if (form.start_date && endDate < startDate) {
+      errors.end_date = 'End date must be after start date';
+      isValid = false;
+    } else {
+      // Check if period duration is reasonable (max 10 days)
+      const diffTime = endDate.getTime() - startDate.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      if (diffDays > 10) {
+        errors.end_date = 'Period duration cannot exceed 10 days';
+        isValid = false;
+      }
+    }
+  }
+
+  // Validate flow intensity
+  if (
+    !form.flow_intensity ||
+    !['light', 'medium', 'heavy', 'very_heavy'].includes(form.flow_intensity)
+  ) {
+    errors.flow_intensity = 'Please select a valid flow intensity';
+    isValid = false;
+  }
+
+  // Validate symptoms (optional but if provided, should be valid)
+  if (form.symptoms && form.symptoms.length > 0) {
+    const invalidSymptoms = form.symptoms.filter(
+      (symptom) => !PERIOD_SYMPTOMS.includes(symptom)
+    );
+    if (invalidSymptoms.length > 0) {
+      errors.symptoms = 'Invalid symptoms selected';
+      isValid = false;
+    }
+  }
+
+  // Validate description length
+  if (form.period_description && form.period_description.length > 500) {
+    errors.period_description = 'Description cannot exceed 500 characters';
+    isValid = false;
+  }
+
+  return { isValid, errors };
+}
+
+export function createEmptyPeriodForm(): PeriodTrackingRequest {
+  return {
+    start_date: '',
+    end_date: null,
+    symptoms: [],
+    flow_intensity: 'medium',
+    period_description: null,
+  };
+}
+
+export function isFormDirty(
+  form: PeriodTrackingRequest,
+  originalForm: PeriodTrackingRequest
+): boolean {
+  return (
+    form.start_date !== originalForm.start_date ||
+    form.end_date !== originalForm.end_date ||
+    form.flow_intensity !== originalForm.flow_intensity ||
+    form.period_description !== originalForm.period_description ||
+    JSON.stringify(form.symptoms?.sort()) !==
+      JSON.stringify(originalForm.symptoms?.sort())
+  );
+}
+
+export function sanitizePeriodForm(
+  form: PeriodTrackingRequest
+): PeriodTrackingRequest {
+  return {
+    start_date: form.start_date?.trim() || '',
+    end_date: form.end_date?.trim() || null,
+    symptoms:
+      form.symptoms?.filter((symptom) => PERIOD_SYMPTOMS.includes(symptom)) ||
+      [],
+    flow_intensity: ['light', 'medium', 'heavy', 'very_heavy'].includes(
+      form.flow_intensity
+    )
+      ? form.flow_intensity
+      : 'medium',
+    period_description:
+      form.period_description?.trim().substring(0, 500) || null,
+  };
 }

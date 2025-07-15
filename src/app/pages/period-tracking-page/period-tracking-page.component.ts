@@ -10,10 +10,16 @@ import {
   PeriodEntry,
   PeriodStats,
   PeriodTrackingRequest,
+  PeriodFormValidation,
+  PeriodFormState,
   PERIOD_SYMPTOMS,
   FLOW_INTENSITIES,
   PeriodSymptom,
   getSymptomDisplayName,
+  validatePeriodForm,
+  createEmptyPeriodForm,
+  isFormDirty,
+  sanitizePeriodForm,
 } from '../../models/period-tracking.model';
 import { HeaderComponent } from '../../components/header/header.component';
 import { FooterComponent } from '../../components/footer/footer.component';
@@ -51,13 +57,14 @@ export class PeriodTrackingComponent implements OnInit {
   currentMonth = signal(new Date());
 
   // =========== FORM DATA ===========
-  logForm: PeriodTrackingRequest = {
-    start_date: '',
-    end_date: '',
-    symptoms: [],
-    flow_intensity: 'medium',
-    period_description: '',
-  };
+  logForm: PeriodTrackingRequest = createEmptyPeriodForm();
+  originalForm: PeriodTrackingRequest = createEmptyPeriodForm();
+  formValidation = signal<PeriodFormValidation>({ isValid: true, errors: {} });
+  formState = signal<PeriodFormState>({
+    isSubmitting: false,
+    isDirty: false,
+    validation: { isValid: true, errors: {} },
+  });
 
   // =========== CONSTANTS ===========
   readonly symptoms = PERIOD_SYMPTOMS;
@@ -67,6 +74,10 @@ export class PeriodTrackingComponent implements OnInit {
 
   // =========== UTILITY METHODS ===========
   getSymptomDisplayName = getSymptomDisplayName;
+
+  getTodayDateString(): string {
+    return new Date().toISOString().split('T')[0];
+  }
 
   // =========== LIFECYCLE ===========
   ngOnInit(): void {
@@ -233,6 +244,23 @@ export class PeriodTrackingComponent implements OnInit {
     }
 
     this.logForm.symptoms = [...symptoms];
+    this.validateForm();
+  }
+
+  validateForm(): void {
+    const validation = validatePeriodForm(this.logForm);
+    this.formValidation.set(validation);
+
+    const isDirty = isFormDirty(this.logForm, this.originalForm);
+    this.formState.update((state) => ({
+      ...state,
+      isDirty,
+      validation,
+    }));
+  }
+
+  onFormFieldChange(): void {
+    this.validateForm();
   }
 
   isSymptomSelected(symptom: PeriodSymptom): boolean {
@@ -240,13 +268,14 @@ export class PeriodTrackingComponent implements OnInit {
   }
 
   resetForm(): void {
-    this.logForm = {
-      start_date: '',
-      end_date: '',
-      symptoms: [],
-      flow_intensity: 'medium',
-      period_description: '',
-    };
+    this.logForm = createEmptyPeriodForm();
+    this.originalForm = createEmptyPeriodForm();
+    this.formValidation.set({ isValid: true, errors: {} });
+    this.formState.set({
+      isSubmitting: false,
+      isDirty: false,
+      validation: { isValid: true, errors: {} },
+    });
   }
 
   // =========== FORM SUBMISSION ===========
@@ -425,28 +454,46 @@ export class PeriodTrackingComponent implements OnInit {
   }
 
   savePeriodData(): void {
-    if (!this.logForm.start_date) {
-      alert(this.translate.instant('PERIOD.ERRORS.START_DATE_REQUIRED'));
+    // Validate form before submission
+    const validation = validatePeriodForm(this.logForm);
+    this.formValidation.set(validation);
+
+    if (!validation.isValid) {
+      // Show first error message
+      const firstError = Object.values(validation.errors)[0];
+      if (firstError) {
+        alert(firstError);
+      }
       return;
     }
 
+    // Sanitize form data
+    const sanitizedForm = sanitizePeriodForm(this.logForm);
+
+    this.formState.update((state) => ({ ...state, isSubmitting: true }));
     this.isLoading.set(true);
 
-    // Simulate API call for now
-    setTimeout(() => {
-      this.isLoading.set(false);
-      this.showLogForm.set(false);
+    // Use the period service to save data
+    this.periodService.logPeriodData(sanitizedForm).subscribe({
+      next: (response) => {
+        console.log('Period logged successfully:', response);
+        this.isLoading.set(false);
+        this.formState.update((state) => ({ ...state, isSubmitting: false }));
+        this.showLogForm.set(false);
+        this.resetForm();
+        this.loadPeriodData(); // Reload data to show updated information
 
-      // Reset form
-      this.logForm = {
-        start_date: '',
-        end_date: '',
-        symptoms: [],
-        flow_intensity: 'medium',
-        period_description: '',
-      };
+        const successMsg = this.translate.instant('PERIOD.SUCCESS.LOGGED');
+        alert(successMsg);
+      },
+      error: (error) => {
+        console.error('Error saving period data:', error);
+        this.isLoading.set(false);
+        this.formState.update((state) => ({ ...state, isSubmitting: false }));
 
-      alert(this.translate.instant('PERIOD.SUCCESS.LOGGED'));
-    }, 1000);
+        const errorMsg = this.translate.instant('PERIOD.ERRORS.SAVE_FAILED');
+        alert(errorMsg);
+      },
+    });
   }
 }
