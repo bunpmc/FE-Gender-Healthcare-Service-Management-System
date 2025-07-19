@@ -2,10 +2,10 @@ import { Component, inject, OnInit } from '@angular/core';
 import { FooterComponent } from '../../components/footer/footer.component';
 import { HeaderComponent } from '../../components/header/header.component';
 import { ContactMessage } from '../../models/user.model';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { FormsModule, NgForm } from '@angular/forms';
 import { environment } from '../../environments/environment';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { createClient } from '@supabase/supabase-js';
 
 @Component({
   selector: 'app-consultation-page',
@@ -22,7 +22,10 @@ export class ConsultationPageComponent implements OnInit {
   // Bind cho form
   contactData: Partial<ContactMessage> = {};
 
-  private http = inject(HttpClient);
+  private supabase = createClient(
+    environment.supabaseUrl,
+    environment.supabaseKey
+  );
   private translate = inject(TranslateService);
 
   ngOnInit() {
@@ -46,6 +49,7 @@ export class ConsultationPageComponent implements OnInit {
       localStorage.setItem('Remember-contact-form', JSON.stringify(form.value));
     }
   }
+
   markAllAsTouched(form: NgForm) {
     Object.values(form.controls).forEach((control) => {
       control.markAsTouched();
@@ -64,23 +68,17 @@ export class ConsultationPageComponent implements OnInit {
     const contactData = { ...form.value };
 
     try {
-      // Call API trực tiếp không qua SupabaseService
-      const headers = new HttpHeaders({
-        'Content-Type': 'application/json',
+      // Call the create_ticket function
+      const { data, error } = await this.supabase.rpc('create_ticket', {
+        p_message: contactData.message,
+        // patient_id and schedule are null since they're not in the form
+        p_patient_id: null,
+        p_schedule: null,
       });
 
-      const response = await this.http
-        .post(
-          `${environment.apiEndpoint}/send-contact-message`,
-          {
-            full_name: contactData.fullName,
-            email: contactData.email,
-            phone: contactData.phone,
-            message: contactData.message,
-          },
-          { headers }
-        )
-        .toPromise();
+      if (error) {
+        throw error;
+      }
 
       const successMessage = this.translate.instant(
         'CONSULTATION.SUCCESS.MESSAGE_SENT'

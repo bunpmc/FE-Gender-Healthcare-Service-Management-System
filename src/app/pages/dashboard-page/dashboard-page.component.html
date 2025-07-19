@@ -11,7 +11,15 @@
     <div *ngIf="errorMessage && !isLoading" class="error-container">
       <div class="error-icon">⚠️</div>
       <p class="error-message">{{ errorMessage }}</p>
-      <button class="retry-btn" (click)="refreshDashboard()">Try Again</button>
+      <div class="error-actions">
+        <button class="retry-btn" (click)="refreshDashboard()">
+          Try Again
+        </button>
+        <button class="debug-btn" (click)="debugToken()">Debug Token</button>
+        <button class="refresh-token-btn" (click)="forceRefreshToken()">
+          Refresh Token
+        </button>
+      </div>
     </div>
 
     <div class="dashboard-content" *ngIf="!isLoading && !errorMessage">

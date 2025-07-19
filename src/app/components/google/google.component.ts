@@ -1,16 +1,37 @@
-import { Component, inject } from '@angular/core';
-import { AuthGoogleService } from '../../auth/auth-google.service';
+import { Component } from '@angular/core';
+import { createClient } from '@supabase/supabase-js';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-google',
   standalone: true,
   templateUrl: './google.component.html',
-  styleUrl: './google.component.css',
+  styleUrls: ['./google.component.css'], // <-- fix ở đây
 })
 export class GoogleComponent {
-  private googleAuth = inject(AuthGoogleService);
+  supabase = createClient(environment.supabaseUrl, environment.supabaseKey);
+  isLoading = false;
 
-  loginWithGoogle() {
-    this.googleAuth.login(); // <-- chỉ cần gọi hàm login
+  async signInWithGoogle() {
+    try {
+      this.isLoading = true;
+
+      const { error } = await this.supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`, // <-- redirect đúng về frontend
+        },
+      });
+
+      if (error) {
+        console.error('Google sign-in error:', error.message);
+        alert('Google sign-in failed. Please try again.');
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      alert('Unexpected error occurred.');
+    } finally {
+      this.isLoading = false;
+    }
   }
 }

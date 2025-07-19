@@ -103,6 +103,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   appointmentMapping: { [key: number]: DashboardAppointment[] } = {};
 
   ngOnInit() {
+    // Debug token first
+    this.authService.debugToken();
+
     // Initialize calendar
     this.generateCalendarDays();
     // Load user profile data
@@ -1101,5 +1104,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   refreshDashboard(): void {
     this.loadDashboardData();
+  }
+
+  /**
+   * Debug token information
+   */
+  debugToken(): void {
+    this.authService.debugToken();
+  }
+
+  /**
+   * Force refresh token
+   */
+  async forceRefreshToken(): Promise<void> {
+    console.log('Forcing token refresh...');
+    const success = await this.authService.forceRefreshToken();
+    if (success) {
+      console.log('Token refreshed successfully, retrying dashboard load...');
+      this.loadEdgeFunctionProfile();
+    } else {
+      console.error('Failed to refresh token');
+    }
   }
 }

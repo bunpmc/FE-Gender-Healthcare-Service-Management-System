@@ -270,6 +270,15 @@
       "DATE": "Date",
       "AVAILABLE_SLOTS": "Available time slots",
       "FULL": "(Full)"
+    },
+    "CONFIRM_LEAVE": "You have unsaved changes. Are you sure you want to leave?",
+    "PROFILE_SELECTION": {
+      "TITLE": "Who is this appointment for?",
+      "SUBTITLE": "Choose whether you're booking for yourself or someone else",
+      "USE_MY_PROFILE": "Book for myself",
+      "USE_MY_PROFILE_DESC": "Use my saved profile information",
+      "BOOK_FOR_ANOTHER": "Book for someone else",
+      "BOOK_FOR_ANOTHER_DESC": "Enter different patient information"
     }
   },
   "SERVICES": {
@@ -372,5 +381,9 @@
       "UPDATED": "Data updated successfully",
       "DELETED": "Data deleted successfully"
     }
+  },
+  "COMMON": {
+    "BACK": "Back",
+    "CONTINUE": "Continue"
   }
 }

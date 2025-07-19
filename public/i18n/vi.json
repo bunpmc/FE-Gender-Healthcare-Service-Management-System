@@ -270,6 +270,15 @@
       "DATE": "Ngày",
       "AVAILABLE_SLOTS": "Khung giờ có sẵn",
       "FULL": "(Đầy)"
+    },
+    "CONFIRM_LEAVE": "Bạn có thay đổi chưa được lưu. Bạn có chắc chắn muốn rời khỏi trang này không?",
+    "PROFILE_SELECTION": {
+      "TITLE": "Cuộc hẹn này dành cho ai?",
+      "SUBTITLE": "Chọn xem bạn đặt lịch cho chính mình hay cho người khác",
+      "USE_MY_PROFILE": "Đặt cho tôi",
+      "USE_MY_PROFILE_DESC": "Sử dụng thông tin hồ sơ đã lưu của tôi",
+      "BOOK_FOR_ANOTHER": "Đặt cho người khác",
+      "BOOK_FOR_ANOTHER_DESC": "Nhập thông tin bệnh nhân khác"
     }
   },
   "SERVICES": {
@@ -372,5 +381,9 @@
       "UPDATED": "Đã cập nhật dữ liệu thành công",
       "DELETED": "Đã xóa dữ liệu thành công"
     }
+  },
+  "COMMON": {
+    "BACK": "Quay lại",
+    "CONTINUE": "Tiếp tục"
   }
 }

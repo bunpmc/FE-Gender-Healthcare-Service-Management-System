@@ -249,55 +249,147 @@
 
       <li class="flex py-5 sm:w-auto sm:py-0 relative group">
         <a class="flex items-center cursor-pointer">
-          <span class="flex mr-3 sm:mr-0">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="size-8"
+          <div class="flex items-center">
+            <!-- User Avatar/Icon -->
+            @if (getUserImage()) {
+            <img
+              [src]="getUserImage()"
+              [alt]="getUserDisplayName()"
+              class="w-8 h-8 rounded-full object-cover border-2 border-gray-300"
+              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+            />
+            <div
+              class="w-8 h-8 rounded-full bg-gray-300 items-center justify-center text-gray-600 hidden"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-              />
-            </svg>
-            @if (user?.phone) {
-            <span class="flex justify-center items-center ml-1">
-              {{ user.phone }}
-            </span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-5 h-5"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                />
+              </svg>
+            </div>
+            } @else {
+            <div
+              class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-600"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-5 h-5"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                />
+              </svg>
+            </div>
             }
-          </span>
+
+            <!-- User Info -->
+            @if (user) {
+            <div
+              class="hidden sm:flex flex-col justify-center items-start ml-3 max-w-[150px]"
+            >
+              @if (getUserDisplayName()) {
+              <span class="text-sm font-medium text-gray-800 truncate w-full">
+                {{ getUserDisplayName() }}
+              </span>
+              } @if (user.phone) {
+              <span class="text-xs text-gray-600 truncate w-full">
+                {{ user.phone }}
+              </span>
+              } @else if (getUserEmail()) {
+              <span class="text-xs text-gray-600 truncate w-full">
+                {{ getUserEmail() }}
+              </span>
+              }
+            </div>
+            }
+          </div>
         </a>
         <!-- hover fetch data -->
         <div
-          class="absolute top-[120%] right-0 mt-2 min-w-[160px] bg-[#2a2f3b] rounded shadow-lg z-50 cards invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200"
+          class="absolute top-[120%] right-0 mt-2 min-w-[200px] bg-[#2a2f3b] rounded shadow-lg z-50 cards invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200"
         >
           @if (user) {
+          <!-- User Info Header in Dropdown -->
+          <div class="px-4 py-3 border-b border-gray-600">
+            <div class="flex items-center space-x-3">
+              @if (getUserImage()) {
+              <img
+                [src]="getUserImage()"
+                [alt]="getUserDisplayName()"
+                class="w-10 h-10 rounded-full object-cover"
+              />
+              } @else {
+              <div
+                class="w-10 h-10 rounded-full bg-gray-500 flex items-center justify-center"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="w-6 h-6 text-white"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                  />
+                </svg>
+              </div>
+              }
+              <div class="flex-1 min-w-0">
+                @if (getUserDisplayName()) {
+                <p class="text-sm font-medium text-white truncate">
+                  {{ getUserDisplayName() }}
+                </p>
+                } @if (getUserEmail()) {
+                <p class="text-xs text-gray-300 truncate">
+                  {{ getUserEmail() }}
+                </p>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Menu Items -->
           <a
             routerLink="/dashboard"
-            class="block px-4 py-2 text-white cursor-pointer card transition-all duration-300"
+            class="block px-4 py-2 text-white cursor-pointer card transition-all duration-300 hover:bg-gray-700"
           >
             {{ "USER.DASHBOARD" | translate }}
           </a>
           <a
             (click)="logout()"
-            class="block px-4 py-2 text-white cursor-pointer card transition-all duration-300"
+            class="block px-4 py-2 text-white cursor-pointer card transition-all duration-300 hover:bg-gray-700"
           >
             {{ "USER.LOGOUT" | translate }}
           </a>
           } @else {
           <a
             routerLink="/login"
-            class="block px-4 py-2 text-white cursor-pointer card transition-all duration-300"
+            class="block px-4 py-2 text-white cursor-pointer card transition-all duration-300 hover:bg-gray-700"
           >
             {{ "USER.LOGIN" | translate }}
           </a>
           <a
             routerLink="/register"
-            class="block px-4 py-2 text-white cursor-pointer card transition-all duration-300"
+            class="block px-4 py-2 text-white cursor-pointer card transition-all duration-300 hover:bg-gray-700"
           >
             {{ "USER.REGISTER" | translate }}
           </a>

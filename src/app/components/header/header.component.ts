@@ -70,20 +70,40 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   getUserInfo() {
-    this.authService.getUserProfile().subscribe({
-      next: (data: any) => {
-        this.user = data;
+    // Subscribe to current user changes for real-time updates
+    this.authService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe({
+      next: (user) => {
+        this.user = user;
+        console.log(
+          'Header: Current user updated:',
+          user?.patient?.full_name || 'No name available'
+        );
       },
       error: (err: any) => {
+        console.error('Header: Error getting user info:', err);
         this.user = null;
+      },
+    });
+
+    // Also try to get user profile from API as fallback
+    this.authService.getUserProfile().subscribe({
+      next: (data: any) => {
+        if (!this.user && data) {
+          this.user = data;
+          console.log('Header: User profile from API:', data);
+        }
+      },
+      error: (err: any) => {
+        console.error('Header: Error getting user profile:', err);
       },
     });
   }
 
   logout() {
-    localStorage.removeItem('access_token');
+    // Use AuthService logout method to properly clear all data
+    this.authService.logout();
     this.user = null;
-    this.router.navigate(['/login']);
+    this.router.navigate(['/']); // Redirect to home page instead of login
   }
 
   isSearchHandle(val: boolean) {
@@ -103,5 +123,52 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
   toggleHamburger() {
     this.isActive = !this.isActive;
+  }
+
+  // Helper method to get user's display name
+  getUserDisplayName(): string {
+    if (!this.user) return '';
+
+    // Try different sources for the name
+    if (this.user.patient?.full_name) {
+      return this.user.patient.full_name;
+    }
+
+    // Check if user object has name property (from localStorage)
+    if ((this.user as any).name) {
+      return (this.user as any).name;
+    }
+
+    // Check if user object has full_name property
+    if ((this.user as any).full_name) {
+      return (this.user as any).full_name;
+    }
+
+    // Fallback to email
+    return this.user.email || 'User';
+  }
+
+  // Helper method to get user's email
+  getUserEmail(): string {
+    if (!this.user) return '';
+
+    return this.user.email || this.user.patient?.email || '';
+  }
+
+  // Helper method to get user's image
+  getUserImage(): string {
+    if (!this.user) return '';
+
+    // Try different sources for the image
+    if (this.user.patient?.image_link) {
+      return this.user.patient.image_link;
+    }
+
+    // Check if user object has picture property (from Google OAuth)
+    if ((this.user as any).picture) {
+      return (this.user as any).picture;
+    }
+
+    return '';
   }
 }

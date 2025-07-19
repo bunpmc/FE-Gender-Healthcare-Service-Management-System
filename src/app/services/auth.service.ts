@@ -54,11 +54,8 @@ export class AuthService {
       environment.supabaseKey
     );
 
-    // Set mock access token for development
-    this.setMockAccessToken();
-
-    // For development, mock authentication with first patient
-    this.initializeMockAuth();
+    // Initialize real authentication
+    this.initializeAuth();
   }
 
   // =========== PRIVATE HEADER BUILDER ===========
@@ -68,29 +65,255 @@ export class AuthService {
     });
   }
 
-  // =========== MOCK ACCESS TOKEN ===========
-  private setMockAccessToken(): void {
-    // For development, try to get a real Supabase session
-    this.supabase.auth
-      .getSession()
-      .then(({ data: { session } }) => {
-        if (session?.access_token) {
-          localStorage.setItem('access_token', session.access_token);
-          console.log('Real Supabase access token set');
-        } else {
-          // Fallback to mock token for development
-          const mockToken = 'mock-access-token-for-development';
-          localStorage.setItem('access_token', mockToken);
-          console.log('Mock access token set for development');
+  // =========== GET VALID ACCESS TOKEN ===========
+  private async getValidAccessToken(): Promise<string | null> {
+    try {
+      // First try to get current session
+      const {
+        data: { session },
+        error,
+      } = await this.supabase.auth.getSession();
+
+      if (error) {
+        console.error('Error getting session:', error);
+        return null;
+      }
+
+      if (session?.access_token) {
+        // Store the valid token
+        localStorage.setItem('access_token', session.access_token);
+        if (session.refresh_token) {
+          localStorage.setItem('refresh_token', session.refresh_token);
         }
-      })
-      .catch((error) => {
-        console.error('Error getting Supabase session:', error);
-        // Fallback to mock token
-        const mockToken = 'mock-access-token-for-development';
-        localStorage.setItem('access_token', mockToken);
-        console.log('Mock access token set as fallback');
-      });
+        console.log('Valid Supabase access token retrieved');
+        return session.access_token;
+      }
+
+      // If no session, try to refresh or create anonymous session
+      console.log('No active session found');
+      return null;
+    } catch (error) {
+      console.error('Error getting valid access token:', error);
+      return null;
+    }
+  }
+
+  // =========== SET SESSION (for external auth like Google) ===========
+  setSession(session: any): void {
+    if (session?.access_token) {
+      localStorage.setItem('access_token', session.access_token);
+      if (session.refresh_token) {
+        localStorage.setItem('refresh_token', session.refresh_token);
+      }
+
+      // Set the session in Supabase client
+      this.supabase.auth.setSession(session);
+
+      // Update current user if user data is available
+      if (session.user) {
+        const authUser: AuthUser = {
+          id: session.user.id,
+          phone: session.user.phone || '',
+          email: session.user.email,
+          patientId: session.user.user_metadata?.patient_id,
+        };
+        this.currentUserSubject.next(authUser);
+      }
+
+      console.log('Session set successfully');
+    }
+  }
+
+  // =========== CREATE DEVELOPMENT SESSION ===========
+  async createDevelopmentSession(): Promise<boolean> {
+    try {
+      // Try to sign in anonymously for development
+      const { data, error } = await this.supabase.auth.signInAnonymously();
+
+      if (error) {
+        console.error('Error creating anonymous session:', error);
+
+        // Try to create a user with email/password for development
+        const devEmail = 'dev@test.com';
+        const devPassword = 'devpassword123';
+
+        const { data: signUpData, error: signUpError } =
+          await this.supabase.auth.signUp({
+            email: devEmail,
+            password: devPassword,
+          });
+
+        if (signUpError) {
+          console.error('Error creating dev user:', signUpError);
+          return false;
+        }
+
+        // Try to sign in with the dev user
+        const { data: signInData, error: signInError } =
+          await this.supabase.auth.signInWithPassword({
+            email: devEmail,
+            password: devPassword,
+          });
+
+        if (signInError) {
+          console.error('Error signing in dev user:', signInError);
+          return false;
+        }
+
+        if (signInData.session?.access_token) {
+          localStorage.setItem('access_token', signInData.session.access_token);
+          localStorage.setItem(
+            'refresh_token',
+            signInData.session.refresh_token || ''
+          );
+          console.log('Development session created with email/password');
+          return true;
+        }
+
+        return false;
+      }
+
+      if (data.session?.access_token) {
+        localStorage.setItem('access_token', data.session.access_token);
+        localStorage.setItem('refresh_token', data.session.refresh_token || '');
+        console.log('Development session created anonymously');
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Error creating development session:', error);
+      return false;
+    }
+  }
+
+  // =========== FORCE REFRESH TOKEN ===========
+  async forceRefreshToken(): Promise<boolean> {
+    try {
+      const { data, error } = await this.supabase.auth.refreshSession();
+
+      if (error) {
+        console.error('Error refreshing session:', error);
+        // Try to create a new development session
+        return await this.createDevelopmentSession();
+      }
+
+      if (data.session?.access_token) {
+        localStorage.setItem('access_token', data.session.access_token);
+        localStorage.setItem('refresh_token', data.session.refresh_token || '');
+        console.log('Token refreshed successfully');
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Error in forceRefreshToken:', error);
+      return await this.createDevelopmentSession();
+    }
+  }
+
+  // =========== DEBUG TOKEN ===========
+  debugToken(): void {
+    const token = localStorage.getItem('access_token');
+    console.log('=== TOKEN DEBUG ===');
+    console.log('Token exists:', !!token);
+    console.log('Token length:', token?.length || 0);
+    console.log('Token preview:', token?.substring(0, 50) + '...');
+
+    if (token) {
+      try {
+        // Try to decode JWT payload (just for debugging)
+        const parts = token.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1]));
+          console.log('Token payload:', payload);
+          console.log('Token expires:', new Date(payload.exp * 1000));
+          console.log('Token is expired:', payload.exp * 1000 < Date.now());
+        }
+      } catch (e) {
+        console.log('Token is not a valid JWT:', e);
+      }
+    }
+    console.log('==================');
+  }
+
+  // =========== INITIALIZE AUTHENTICATION ===========
+  private async initializeAuth(): Promise<void> {
+    try {
+      // First check if we have an access token
+      const accessToken = localStorage.getItem('access_token');
+
+      if (accessToken) {
+        console.log('✅ Access token found in localStorage');
+
+        // Check if user is already authenticated with Supabase
+        const {
+          data: { session },
+          error,
+        } = await this.supabase.auth.getSession();
+
+        if (error) {
+          console.error('Error checking session:', error);
+          // Fallback to localStorage user
+          this.loadUserFromLocalStorage();
+          return;
+        }
+
+        if (session?.user) {
+          // User is authenticated, set up the session
+          this.setSession(session);
+          console.log('✅ User already authenticated:', session.user.email);
+        } else {
+          // No Supabase session but we have access token, try to restore from localStorage
+          this.loadUserFromLocalStorage();
+        }
+      } else {
+        console.log('❌ No access token found');
+        // Check if we have user data in localStorage (fallback)
+        this.loadUserFromLocalStorage();
+      }
+    } catch (error) {
+      console.error('Error initializing auth:', error);
+      // Fallback to localStorage user
+      this.loadUserFromLocalStorage();
+    }
+  }
+
+  // =========== LOAD USER FROM LOCALSTORAGE ===========
+  private loadUserFromLocalStorage(): void {
+    try {
+      const currentUserStr = localStorage.getItem('current_user');
+
+      if (currentUserStr) {
+        const currentUser = JSON.parse(currentUserStr);
+        console.log('✅ Found user in localStorage:', currentUser.email);
+
+        // Create AuthUser from localStorage data
+        const authUser: AuthUser = {
+          id: currentUser.id,
+          phone: currentUser.phone || '',
+          email: currentUser.email,
+          patientId: currentUser.supabase_user?.id || currentUser.id,
+          patient: currentUser.patient_profile || {
+            id: currentUser.supabase_user?.id || currentUser.id,
+            full_name: currentUser.name,
+            email: currentUser.email,
+            phone: currentUser.phone || '',
+            image_link: currentUser.picture,
+            patient_status: 'active',
+            created_at: currentUser.authenticated_at,
+            updated_at: currentUser.authenticated_at,
+          },
+        };
+
+        this.currentUserSubject.next(authUser);
+        console.log('✅ User restored from localStorage');
+      } else {
+        console.log('❌ No user data found in localStorage');
+      }
+    } catch (error) {
+      console.error('Error loading user from localStorage:', error);
+    }
   }
 
   // =========== REGISTER USER ===========
@@ -205,153 +428,138 @@ export class AuthService {
 
   // =========== EDGE FUNCTION PROFILE ===========
   getUserProfileFromEdgeFunction(): Observable<EdgeFunctionUserProfile> {
-    let token =
-      localStorage.getItem('access_token') ||
-      sessionStorage.getItem('access_token');
-
-    if (!token) {
-      throw new Error('No access token found');
-    }
-
-    const headers = new HttpHeaders({
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    });
-
-    // Call the edge function endpoint
-    const edgeFunctionUrl = `${environment.supabaseUrl}/functions/v1/me`;
-    return this.http
-      .get<EdgeFunctionUserProfile>(edgeFunctionUrl, {
-        headers,
-      })
-      .pipe(
-        map((response) => {
-          // Update current user with edge function data
-          if (response) {
-            const updatedUser: AuthUser = {
-              id: response.id,
-              phone: response.phone,
-              email: response.email,
-              patientId: response.id,
-              patient: {
-                id: response.id,
-                full_name: response.full_name,
-                phone: response.phone,
-                email: response.email,
-                date_of_birth: response.date_of_birth,
-                gender: response.gender,
-                patient_status: response.patient_status,
-                image_link: response.image_link,
-                vaccination_status: 'not_vaccinated', // Default value
-                allergies: null,
-                chronic_conditions: null,
-                past_surgeries: null,
-                bio: null,
-              },
-            };
-            this.currentUserSubject.next(updatedUser);
+    return new Observable((observer) => {
+      this.getValidAccessToken()
+        .then((token) => {
+          if (!token) {
+            // Try to get from localStorage as fallback
+            token =
+              localStorage.getItem('access_token') ||
+              sessionStorage.getItem('access_token');
           }
-          return response;
-        }),
-        catchError((error) => {
-          console.error(
-            'Error fetching user profile from edge function:',
-            error
-          );
-          throw error;
+
+          if (!token) {
+            observer.error(
+              new Error('No valid access token found. Please login again.')
+            );
+            return;
+          }
+
+          const headers = new HttpHeaders({
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          });
+
+          // Call the edge function endpoint
+          const edgeFunctionUrl = `${environment.supabaseUrl}/functions/v1/me`;
+
+          this.http
+            .get<EdgeFunctionUserProfile>(edgeFunctionUrl, { headers })
+            .subscribe({
+              next: (response) => {
+                // Update current user with edge function data
+                if (response) {
+                  const updatedUser: AuthUser = {
+                    id: response.id,
+                    phone: response.phone,
+                    email: response.email,
+                    patientId: response.id,
+                    patient: {
+                      id: response.id,
+                      full_name: response.full_name,
+                      phone: response.phone,
+                      email: response.email,
+                      date_of_birth: response.date_of_birth,
+                      gender: response.gender,
+                      patient_status: response.patient_status,
+                      image_link: response.image_link,
+                      vaccination_status: 'not_vaccinated',
+                      created_at: new Date().toISOString(),
+                      updated_at: new Date().toISOString(),
+                    },
+                  };
+                  this.currentUserSubject.next(updatedUser);
+                }
+                observer.next(response);
+                observer.complete();
+              },
+              error: (error) => {
+                console.error(
+                  'Error fetching user profile from edge function:',
+                  error
+                );
+
+                // If it's a 401 error, try to refresh token and retry
+                if (error.status === 401) {
+                  console.log('Token expired, attempting to refresh...');
+                  this.forceRefreshToken().then((success) => {
+                    if (success) {
+                      console.log('Token refreshed, retrying request...');
+                      // Retry the request with new token
+                      const newToken = localStorage.getItem('access_token');
+                      if (newToken) {
+                        const newHeaders = new HttpHeaders({
+                          Authorization: `Bearer ${newToken}`,
+                          'Content-Type': 'application/json',
+                        });
+
+                        this.http
+                          .get<EdgeFunctionUserProfile>(edgeFunctionUrl, {
+                            headers: newHeaders,
+                          })
+                          .subscribe({
+                            next: (response) => {
+                              if (response) {
+                                const updatedUser: AuthUser = {
+                                  id: response.id,
+                                  phone: response.phone,
+                                  email: response.email,
+                                  patientId: response.id,
+                                  patient: {
+                                    id: response.id,
+                                    full_name: response.full_name,
+                                    phone: response.phone,
+                                    email: response.email,
+                                    date_of_birth: response.date_of_birth,
+                                    gender: response.gender,
+                                    patient_status: response.patient_status,
+                                    image_link: response.image_link,
+                                    vaccination_status: 'not_vaccinated',
+                                    created_at: new Date().toISOString(),
+                                    updated_at: new Date().toISOString(),
+                                  },
+                                };
+                                this.currentUserSubject.next(updatedUser);
+                              }
+                              observer.next(response);
+                              observer.complete();
+                            },
+                            error: (retryError) => {
+                              console.error('Retry failed:', retryError);
+                              observer.error(retryError);
+                            },
+                          });
+                      } else {
+                        observer.error(error);
+                      }
+                    } else {
+                      observer.error(error);
+                    }
+                  });
+                } else {
+                  observer.error(error);
+                }
+              },
+            });
         })
-      );
+        .catch((error) => {
+          console.error('Error getting access token:', error);
+          observer.error(error);
+        });
+    });
   }
 
   // =========== PATIENT STATE MANAGEMENT ===========
-
-  /**
-   * Initialize mock authentication for development
-   */
-  private initializeMockAuth(): void {
-    // Mock authentication with patient that has appointments for testing
-    const testPatientId = '69a25879-8618-4299-9e99-d4e22d5474b0'; // Patient with appointment
-
-    from(
-      this.supabase
-        .from('patients')
-        .select('*')
-        .eq('id', testPatientId)
-        .single()
-    )
-      .pipe(
-        map((response) => {
-          if (response.error) {
-            console.warn(
-              'Test patient not found, using first available patient'
-            );
-            // Fallback to first patient if test patient not found
-            this.initializeFallbackAuth();
-            return;
-          }
-
-          const patient = response.data;
-          const mockUser: AuthUser = {
-            id: 'mock-user-id',
-            phone: patient.phone,
-            email: patient.email,
-            patientId: patient.id,
-            patient: patient,
-          };
-
-          console.log(
-            'Mock authentication successful for patient:',
-            patient.full_name,
-            'ID:',
-            patient.id
-          );
-          this.currentUserSubject.next(mockUser);
-        }),
-        catchError((error) => {
-          console.error('Mock authentication failed:', error);
-          this.initializeFallbackAuth();
-          return of(null);
-        })
-      )
-      .subscribe();
-  }
-
-  /**
-   * Fallback authentication with first available patient
-   */
-  private initializeFallbackAuth(): void {
-    from(this.supabase.from('patients').select('*').limit(1).single())
-      .pipe(
-        map((response) => {
-          if (response.error) {
-            console.warn('No patients found for fallback auth');
-            return;
-          }
-
-          const patient = response.data;
-          const mockUser: AuthUser = {
-            id: 'mock-user-id',
-            phone: patient.phone,
-            email: patient.email,
-            patientId: patient.id,
-            patient: patient,
-          };
-
-          console.log(
-            'Fallback authentication successful for patient:',
-            patient.full_name,
-            'ID:',
-            patient.id
-          );
-          this.currentUserSubject.next(mockUser);
-        }),
-        catchError((error) => {
-          console.error('Fallback authentication failed:', error);
-          return of(null);
-        })
-      )
-      .subscribe();
-  }
 
   /**
    * Get current user synchronously
@@ -390,6 +598,20 @@ export class AuthService {
     return this.getCurrentUser() !== null;
   }
 
+  // =========== LOGOUT ===========
+  logout(): void {
+    this.currentUserSubject.next(null);
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('current_user');
+    localStorage.removeItem('id_token');
+
+    // Also sign out from Supabase
+    this.supabase.auth.signOut();
+
+    console.log('✅ User logged out and localStorage cleared');
+  }
+
   /**
    * Update current user's patient data
    */
@@ -402,37 +624,6 @@ export class AuthService {
       };
       this.currentUserSubject.next(updatedUser);
     }
-  }
-
-  /**
-   * Mock authentication with specific patient ID
-   */
-  mockAuthWithPatientId(patientId: string): Observable<boolean> {
-    return from(
-      this.supabase.from('patients').select('*').eq('id', patientId).single()
-    ).pipe(
-      map((response) => {
-        if (response.error) {
-          throw new Error(response.error.message);
-        }
-
-        const patient = response.data;
-        const mockUser: AuthUser = {
-          id: 'mock-user-id',
-          phone: patient.phone,
-          email: patient.email,
-          patientId: patient.id,
-          patient: patient,
-        };
-
-        this.currentUserSubject.next(mockUser);
-        return true;
-      }),
-      catchError((error) => {
-        console.error('Mock authentication failed:', error);
-        return of(false);
-      })
-    );
   }
 
   // ========== SUPABASE DATA METHODS ==========

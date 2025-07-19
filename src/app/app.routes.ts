@@ -102,6 +102,13 @@ export const routes: Routes = [
     component: PaymentResultComponent,
     data: { breadcrumb: 'Payment Result' },
   },
+  {
+    path: 'auth/callback',
+    loadComponent: () =>
+      import('./pages/auth-callback-page/auth-callback.component').then(
+        (m) => m.AuthCallbackComponent
+      ),
+  },
 ];
 
 @NgModule({

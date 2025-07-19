@@ -65,9 +65,16 @@
   max-width: 400px;
 }
 
-.retry-btn {
-  background-color: #0366d6;
-  color: white;
+.error-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.retry-btn,
+.debug-btn,
+.refresh-token-btn {
   border: none;
   padding: 8px 16px;
   border-radius: 6px;
@@ -76,8 +83,31 @@
   transition: background-color 0.2s ease;
 }
 
+.retry-btn {
+  background-color: #0366d6;
+  color: white;
+}
+
 .retry-btn:hover {
   background-color: #0256cc;
+}
+
+.debug-btn {
+  background-color: #6f42c1;
+  color: white;
+}
+
+.debug-btn:hover {
+  background-color: #5a32a3;
+}
+
+.refresh-token-btn {
+  background-color: #28a745;
+  color: white;
+}
+
+.refresh-token-btn:hover {
+  background-color: #218838;
 }
 
 /* Dashboard Statistics Styles */

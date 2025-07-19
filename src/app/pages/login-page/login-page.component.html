@@ -171,11 +171,18 @@
     </form>
     <!-- ============= END LOGIN FORM ============= -->
     <!-- ========== LOGIN WITH GOOGLE ========== -->
-    <app-google />
+    <div class="w-full mt-3 items-center">
+      <div class="flex items-center w-full">
+        <hr class="flex-grow border-t border-gray-300" />
+        <span class="mx-6 text-sm text-gray-500">Or sign in with</span>
+        <hr class="flex-grow border-t border-gray-300" />
+      </div>
+      <div class="mt-2"><app-google /></div>
+    </div>
     <!-- ========== END LOGIN WITH GOOGLE ========== -->
 
     <!-- ========== LINK TO REGISTER ========== -->
-    <div class="flex justify-end -bottom-7 right-0 text-sm text-gray-700">
+    <div class="mt-2 flex justify-end -bottom-7 right-0 text-sm text-gray-700">
       <div class="mx-3">Don't have account</div>
       <a href="/register" class="text-[#4E6688] font-semibold hover:underline">
         Sign up
