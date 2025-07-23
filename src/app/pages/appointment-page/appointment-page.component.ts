@@ -1162,21 +1162,33 @@ export class AppointmentPageComponent implements OnInit {
 
     switch (this.currentStep) {
       case 0:
-        return 'Choose booking type';
+        return this.translate.instant('APPOINTMENT.STEPS.CHOOSE_BOOKING_TYPE');
       case 1:
-        return isLoggedIn ? 'Select profile' : 'Patient information';
+        return isLoggedIn
+          ? this.translate.instant('APPOINTMENT.STEPS.SELECT_PROFILE')
+          : this.translate.instant('APPOINTMENT.STEPS.PATIENT_INFORMATION');
       case 2:
-        return isLoggedIn ? 'Patient information' : 'Select service/doctor';
+        return isLoggedIn
+          ? this.translate.instant('APPOINTMENT.STEPS.PATIENT_INFORMATION')
+          : this.translate.instant('APPOINTMENT.STEPS.SELECT_SERVICE_DOCTOR');
       case 3:
-        return isLoggedIn ? 'Select service/doctor' : 'Select doctor/service';
+        return isLoggedIn
+          ? this.translate.instant('APPOINTMENT.STEPS.SELECT_SERVICE_DOCTOR')
+          : this.translate.instant('APPOINTMENT.STEPS.SELECT_DOCTOR_SERVICE');
       case 4:
-        return isLoggedIn ? 'Select doctor/service' : 'Select time slot';
+        return isLoggedIn
+          ? this.translate.instant('APPOINTMENT.STEPS.SELECT_DOCTOR_SERVICE')
+          : this.translate.instant('APPOINTMENT.STEPS.SELECT_TIME_SLOT');
       case 5:
-        return isLoggedIn ? 'Select time slot' : 'Confirmation';
+        return isLoggedIn
+          ? this.translate.instant('APPOINTMENT.STEPS.SELECT_TIME_SLOT')
+          : this.translate.instant('APPOINTMENT.STEPS.CONFIRMATION');
       case 6:
-        return isLoggedIn ? 'Confirmation' : 'Complete';
+        return isLoggedIn
+          ? this.translate.instant('APPOINTMENT.STEPS.CONFIRMATION')
+          : this.translate.instant('APPOINTMENT.STEPS.COMPLETE');
       default:
-        return 'Booking';
+        return this.translate.instant('APPOINTMENT.STEPS.BOOKING');
     }
   }
   // ========== SCHEDULE MAPPING ==========

@@ -508,6 +508,33 @@ export class AuthService {
     );
   }
 
+  // Add email-based forgot password methods
+  forgotPasswordByEmail(email: string): Observable<any> {
+    return this.http.post(
+      `${environment.apiEndpoint}/request-password-reset`,
+      { email: email.toLowerCase().trim() },
+      { headers: this.getHeaders() }
+    );
+  }
+
+  confirmPasswordResetByEmail(
+    email: string,
+    otp: string,
+    newPassword: string,
+    timestamp: number
+  ): Observable<any> {
+    return this.http.post(
+      `${environment.apiEndpoint}/confirm-password-reset`,
+      {
+        email: email.toLowerCase().trim(),
+        otp,
+        newPassword,
+        timestamp,
+      },
+      { headers: this.getHeaders() }
+    );
+  }
+
   // =========== PROFILE ===========
   getUserProfile(): Observable<any> {
     let token =

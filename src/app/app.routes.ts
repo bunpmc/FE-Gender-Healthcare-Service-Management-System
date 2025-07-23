@@ -23,6 +23,7 @@ import { AppointmentPaymentPageComponent } from './pages/appointment-payment-pag
 import { PeriodTrackingComponent } from './pages/period-tracking-page/period-tracking-page.component';
 import { ErrorPageComponent } from './pages/error-page/error-page.component';
 import { ErrorDemoComponent } from './components/error-demo/error-demo.component';
+import { EmailForgotPasswordPageComponent } from './pages/email-forgot-password-page/email-forgot-password-page.component';
 
 export const routes: Routes = [
   { path: '', component: HomePageComponent, data: { breadcrumb: 'Home' } },
@@ -30,6 +31,10 @@ export const routes: Routes = [
   {
     path: 'forgot-password',
     component: ForgotPasswordComponent,
+  },
+  {
+    path: 'forgot-password-email',
+    component: EmailForgotPasswordPageComponent,
   },
   {
     path: 'register',
