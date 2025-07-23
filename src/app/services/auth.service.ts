@@ -309,11 +309,114 @@ export class AuthService {
         this.currentUserSubject.next(authUser);
         console.log('✅ User restored from localStorage');
       } else {
-        console.log('❌ No user data found in localStorage');
+        // No user data in localStorage, but we might have a token
+        // Create a minimal user object for phone-based authentication
+        const accessToken =
+          localStorage.getItem('access_token') ||
+          sessionStorage.getItem('access_token');
+        if (accessToken) {
+          console.log(
+            '📱 No user data but found token, creating minimal user profile'
+          );
+          // Try to get user profile from API or create minimal profile
+          this.fetchUserProfileFromToken().subscribe({
+            next: (userProfile) => {
+              if (userProfile) {
+                this.currentUserSubject.next(userProfile);
+                // Save to localStorage for future use
+                localStorage.setItem(
+                  'current_user',
+                  JSON.stringify(userProfile)
+                );
+                console.log('✅ User profile fetched and saved');
+              }
+            },
+            error: (error) => {
+              console.error('Error fetching user profile:', error);
+              // Create a minimal user object as fallback
+              const minimalUser: AuthUser = {
+                id: 'phone-user',
+                phone: '',
+                email: '',
+                patientId: 'phone-user',
+                patient: {
+                  id: 'phone-user',
+                  full_name: 'Phone User',
+                  email: '',
+                  phone: '',
+                  image_link: '',
+                  patient_status: 'active',
+                  gender: 'other',
+                  vaccination_status: 'not_vaccinated',
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                },
+              };
+              this.currentUserSubject.next(minimalUser);
+              console.log(
+                '✅ Created minimal user profile for phone authentication'
+              );
+            },
+          });
+        } else {
+          console.log('❌ No user data or token found');
+        }
       }
     } catch (error) {
       console.error('Error loading user from localStorage:', error);
     }
+  }
+
+  // =========== FETCH USER PROFILE FROM TOKEN ===========
+  private fetchUserProfileFromToken(): Observable<AuthUser | null> {
+    const accessToken =
+      localStorage.getItem('access_token') ||
+      sessionStorage.getItem('access_token');
+
+    if (!accessToken) {
+      return of(null);
+    }
+
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    });
+
+    // Try to get user profile from your API
+    return this.http
+      .get<any>(`${environment.apiEndpoint}/me`, { headers })
+      .pipe(
+        map((response) => {
+          if (response && response.data) {
+            const userData = response.data;
+            const authUser: AuthUser = {
+              id: userData.id || 'phone-user',
+              phone: userData.phone || '',
+              email: userData.email || '',
+              patientId: userData.patient_id || userData.id || 'phone-user',
+              patient: {
+                id: userData.patient_id || userData.id || 'phone-user',
+                full_name: userData.full_name || userData.name || 'Phone User',
+                email: userData.email || '',
+                phone: userData.phone || '',
+                image_link: userData.image_link || '',
+                patient_status: 'active',
+                gender: userData.gender || 'other',
+                vaccination_status:
+                  userData.vaccination_status || 'not_vaccinated',
+                created_at: userData.created_at || new Date().toISOString(),
+                updated_at: userData.updated_at || new Date().toISOString(),
+              },
+            };
+            return authUser;
+          }
+          return null;
+        }),
+        catchError((error) => {
+          console.error('Error fetching user profile from token:', error);
+          return of(null);
+        })
+      );
   }
 
   // =========== REGISTER USER ===========
@@ -595,7 +698,23 @@ export class AuthService {
    * Check if user is authenticated
    */
   isAuthenticated(): boolean {
-    return this.getCurrentUser() !== null;
+    // Check if we have a current user in memory
+    const currentUser = this.getCurrentUser();
+    if (currentUser !== null) {
+      return true;
+    }
+
+    // If no user in memory, check for valid tokens
+    const accessToken =
+      localStorage.getItem('access_token') ||
+      sessionStorage.getItem('access_token');
+    if (accessToken) {
+      // We have a token, try to load user data
+      this.loadUserFromLocalStorage();
+      return true;
+    }
+
+    return false;
   }
 
   // =========== LOGOUT ===========

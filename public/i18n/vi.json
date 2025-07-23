@@ -174,7 +174,7 @@
     "TYPING": "AI đang suy nghĩ...",
     "WELCOME": "Xin chào! Tôi là trợ lý sức khỏe của bạn. Tôi có thể giúp gì cho bạn hôm nay? 😊",
     "INPUT_HINT": "Nhấn Enter để gửi • Shift + Enter để xuống dòng",
-    "ERROR": {
+    "CHAT_ERROR": {
       "CONNECTION_LOST": "Mất kết nối. Đang thử lại... Vui lòng kiểm tra server.",
       "SERVER": "Lỗi server. Vui lòng thử lại sau.",
       "TOO_MANY": "Quá nhiều yêu cầu. Vui lòng chờ một chút.",
@@ -279,6 +279,24 @@
       "USE_MY_PROFILE_DESC": "Sử dụng thông tin hồ sơ đã lưu của tôi",
       "BOOK_FOR_ANOTHER": "Đặt cho người khác",
       "BOOK_FOR_ANOTHER_DESC": "Nhập thông tin bệnh nhân khác"
+    },
+    "PAYMENT": {
+      "TITLE": "Thanh toán lịch hẹn",
+      "SUBTITLE": "Vui lòng xem lại thông tin lịch hẹn và hoàn tất thanh toán",
+      "APPOINTMENT_DETAILS": "Chi tiết lịch hẹn",
+      "PATIENT_INFO": "Thông tin bệnh nhân",
+      "APPOINTMENT_INFO": "Thông tin cuộc hẹn",
+      "DOCTOR": "Bác sĩ",
+      "SERVICE": "Dịch vụ",
+      "DATE": "Ngày",
+      "TIME": "Giờ",
+      "TOTAL_AMOUNT": "Tổng tiền",
+      "PAYMENT_NOTE": "Thanh toán là bắt buộc để xác nhận lịch hẹn của bạn",
+      "PAY_NOW": "Thanh toán với VNPay",
+      "PROCESSING": "Đang xử lý thanh toán...",
+      "GO_BACK": "Quay lại đặt lịch",
+      "LOADING": "Đang tải thông tin lịch hẹn...",
+      "SECURE_PAYMENT": "Thanh toán an toàn được hỗ trợ bởi VNPay"
     }
   },
   "SERVICES": {
@@ -380,6 +398,32 @@
       "LOGGED": "Đã lưu dữ liệu kinh nguyệt thành công",
       "UPDATED": "Đã cập nhật dữ liệu thành công",
       "DELETED": "Đã xóa dữ liệu thành công"
+    }
+  },
+  "ERROR": {
+    "SUBTITLE": "Đừng lo lắng, chúng tôi sẽ giúp bạn quay lại đúng hướng",
+    "HELP_TEXT": "Nếu vấn đề này vẫn tiếp tục, vui lòng thử làm mới trang hoặc liên hệ với đội ngũ hỗ trợ của chúng tôi.",
+    "CONTACT_SUPPORT": "Cần hỗ trợ? Liên hệ với chúng tôi tại Gendercare123@gmail.com hoặc +84 909 157 997",
+    "NETWORK": {
+      "TITLE": "Lỗi Kết Nối",
+      "MESSAGE": "Chúng tôi đang gặp sự cố kết nối đến máy chủ. Vui lòng kiểm tra kết nối internet và thử lại."
+    },
+    "404": {
+      "TITLE": "Không Tìm Thấy Trang",
+      "MESSAGE": "Trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển. Hãy để chúng tôi đưa bạn về đúng nơi."
+    },
+    "500": {
+      "TITLE": "Lỗi Máy Chủ",
+      "MESSAGE": "Máy chủ của chúng tôi đang gặp một số khó khăn kỹ thuật. Đội ngũ của chúng tôi đã được thông báo và đang làm việc để khắc phục."
+    },
+    "GENERIC": {
+      "TITLE": "Đã Xảy Ra Lỗi",
+      "MESSAGE": "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại hoặc liên hệ với đội ngũ hỗ trợ nếu vấn đề vẫn tiếp tục."
+    },
+    "ACTIONS": {
+      "RETRY": "Thử Lại",
+      "HOME": "Về Trang Chủ",
+      "BACK": "Quay Lại"
     }
   },
   "COMMON": {

@@ -174,7 +174,7 @@
     "TYPING": "AI is thinking...",
     "WELCOME": "Hello! I'm your healthcare assistant. How can I help you today? 😊",
     "INPUT_HINT": "Press Enter to send • Shift + Enter for new line",
-    "ERROR": {
+    "CHAT_ERROR": {
       "CONNECTION_LOST": "Connection lost. Trying to reconnect... Please check if the server is running.",
       "SERVER": "Server error. Please try again in a moment.",
       "TOO_MANY": "Too many requests. Please wait a moment.",
@@ -279,6 +279,24 @@
       "USE_MY_PROFILE_DESC": "Use my saved profile information",
       "BOOK_FOR_ANOTHER": "Book for someone else",
       "BOOK_FOR_ANOTHER_DESC": "Enter different patient information"
+    },
+    "PAYMENT": {
+      "TITLE": "Appointment Payment",
+      "SUBTITLE": "Please review your appointment details and complete payment",
+      "APPOINTMENT_DETAILS": "Appointment Details",
+      "PATIENT_INFO": "Patient Information",
+      "APPOINTMENT_INFO": "Appointment Information",
+      "DOCTOR": "Doctor",
+      "SERVICE": "Service",
+      "DATE": "Date",
+      "TIME": "Time",
+      "TOTAL_AMOUNT": "Total Amount",
+      "PAYMENT_NOTE": "Payment is required to confirm your appointment",
+      "PAY_NOW": "Pay with VNPay",
+      "PROCESSING": "Processing Payment...",
+      "GO_BACK": "Back to Appointment",
+      "LOADING": "Loading appointment details...",
+      "SECURE_PAYMENT": "Secure payment powered by VNPay"
     }
   },
   "SERVICES": {
@@ -380,6 +398,32 @@
       "LOGGED": "Period data saved successfully",
       "UPDATED": "Data updated successfully",
       "DELETED": "Data deleted successfully"
+    }
+  },
+  "ERROR": {
+    "SUBTITLE": "Don't worry, we're here to help you get back on track",
+    "HELP_TEXT": "If this problem persists, please try refreshing the page or contact our support team.",
+    "CONTACT_SUPPORT": "Need help? Contact us at Gendercare123@gmail.com or +84 909 157 997",
+    "NETWORK": {
+      "TITLE": "Connection Problem",
+      "MESSAGE": "We're having trouble connecting to our servers. Please check your internet connection and try again."
+    },
+    "404": {
+      "TITLE": "Page Not Found",
+      "MESSAGE": "The page you're looking for doesn't exist or has been moved. Let's get you back to where you need to be."
+    },
+    "500": {
+      "TITLE": "Server Error",
+      "MESSAGE": "Our servers are experiencing some technical difficulties. Our team has been notified and is working to fix this."
+    },
+    "GENERIC": {
+      "TITLE": "Something Went Wrong",
+      "MESSAGE": "An unexpected error occurred. Please try again or contact our support team if the problem continues."
+    },
+    "ACTIONS": {
+      "RETRY": "Try Again",
+      "HOME": "Go Home",
+      "BACK": "Go Back"
     }
   },
   "COMMON": {

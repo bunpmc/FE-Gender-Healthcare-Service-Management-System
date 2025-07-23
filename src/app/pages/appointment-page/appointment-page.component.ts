@@ -7,6 +7,8 @@ import { DoctorService } from '../../services/doctor.service';
 import { MedicalService } from '../../services/medical.service';
 import { BookingService } from '../../services/booking.service';
 import { AuthService } from '../../services/auth.service';
+import { HeaderComponent } from '../../components/header/header.component';
+import { FooterComponent } from '../../components/footer/footer.component';
 
 import {
   BookingState,
@@ -17,6 +19,7 @@ import {
   TimeSlot,
   AppointmentCreateRequest,
 } from '../../models/booking.model';
+import { AppointmentPaymentData } from '../../models/payment.model';
 
 // Extend BookingState to include profile selection
 interface ExtendedBookingState extends BookingState {
@@ -34,7 +37,13 @@ interface ExtendedBookingState extends BookingState {
 @Component({
   selector: 'app-appointmentPage',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslateModule,
+    HeaderComponent,
+    FooterComponent,
+  ],
   templateUrl: './appointment-page.component.html',
   styleUrls: ['./appointment-page.component.css'],
 })
@@ -547,7 +556,7 @@ export class AppointmentPageComponent implements OnInit {
   }
 
   onContinueSlot() {
-    console.log('🚀 Final appointment submission started');
+    console.log('🚀 Proceeding to payment step');
     console.log('📋 Current booking state:', {
       slotId: this.booking.preferred_slot_id,
       doctorId: this.booking.doctor_id,
@@ -580,7 +589,7 @@ export class AppointmentPageComponent implements OnInit {
       return;
     }
 
-    console.log('✅ All validations passed, creating appointment data...');
+    console.log('✅ All validations passed, preparing payment data...');
     const appointmentData = {
       full_name: this.booking.fullName,
       phone: this.getFullPhoneNumber(),
@@ -598,35 +607,34 @@ export class AppointmentPageComponent implements OnInit {
       booking_type: this.booking.type || 'docfirst',
     };
 
-    console.log('📝 Appointment data created:', appointmentData);
+    // Get doctor and service names for payment display
+    const selectedDoctor = this.doctors.find(
+      (d) => d.doctor_id === this.booking.doctor_id
+    );
+    const selectedService = this.services.find(
+      (s) => s.service_id === this.booking.service_id
+    );
 
-    const appointmentResult = {
-      success: false,
-      message: 'Processing appointment...',
-      appointmentData: appointmentData,
-      bookingDetails: {
-        appointment_date: this.selectedDate,
-        appointment_time: this.booking.preferred_time,
-        doctor_id: this.booking.doctor_id,
-        service_id: this.booking.service_id,
-        appointment_status: 'pending',
-      },
+    const appointmentPaymentData: AppointmentPaymentData = {
+      appointment_data: appointmentData,
+      payment_amount: 100000, // 100,000 VND
+      doctor_name: selectedDoctor?.full_name || 'Unknown Doctor',
+      service_name: selectedService?.name || 'Consultation',
+      appointment_date: this.selectedDate,
+      appointment_time: this.booking.preferred_time,
     };
 
-    console.log('💾 Saving appointment result to sessionStorage');
+    console.log('📝 Appointment payment data created:', appointmentPaymentData);
+
+    // Save appointment payment data to sessionStorage
+    console.log('💾 Saving appointment payment data to sessionStorage');
     sessionStorage.setItem(
-      'appointmentResult',
-      JSON.stringify(appointmentResult)
+      'appointmentPaymentData',
+      JSON.stringify(appointmentPaymentData)
     );
 
-    console.log(
-      '🧭 Redirecting to appointment result page with data:',
-      appointmentResult
-    );
-    this.router.navigate(['/appointment-success']);
-
-    console.log('🔄 Resetting form after successful submission');
-    this.resetForm();
+    console.log('🧭 Redirecting to appointment payment page');
+    this.router.navigate(['/appointment-payment']);
   }
 
   resetForm(): void {

@@ -215,12 +215,13 @@ export class SupportChatComponent implements AfterViewChecked, OnDestroy {
   }
 
   private getErrorMessage(error: any): void {
-    let key = 'AI_CHAT.ERROR.DEFAULT';
-    if (error.status === 0) key = 'AI_CHAT.ERROR.CONNECTION_LOST';
-    else if (error.status >= 500) key = 'AI_CHAT.ERROR.SERVER';
-    else if (error.status === 429) key = 'AI_CHAT.ERROR.TOO_MANY';
-    else if (error.status === 503) key = 'AI_CHAT.ERROR.SERVICE_UNAVAILABLE';
-    else if (error.status === 404) key = 'AI_CHAT.ERROR.NOT_FOUND';
+    let key = 'AI_CHAT.CHAT_ERROR.DEFAULT';
+    if (error.status === 0) key = 'AI_CHAT.CHAT_ERROR.CONNECTION_LOST';
+    else if (error.status >= 500) key = 'AI_CHAT.CHAT_ERROR.SERVER';
+    else if (error.status === 429) key = 'AI_CHAT.CHAT_ERROR.TOO_MANY';
+    else if (error.status === 503)
+      key = 'AI_CHAT.CHAT_ERROR.SERVICE_UNAVAILABLE';
+    else if (error.status === 404) key = 'AI_CHAT.CHAT_ERROR.NOT_FOUND';
 
     this.translate.get(key, { status: error.status }).subscribe((msg) => {
       this.setCurrentMsg(

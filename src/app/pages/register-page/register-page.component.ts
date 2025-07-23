@@ -326,6 +326,30 @@ export class RegisterComponent {
         next: (res: VerifyOTPResponse) => {
           if (res.data?.access_token) {
             this.tokenService.setTokenSession(res.data.access_token);
+
+            // Also save user data if available
+            if (res.data.user) {
+              const userData = {
+                id: res.data.user.id,
+                phone: res.data.user.phone || state.formData.phone,
+                email: (res.data.user as any).email || '',
+                name: (res.data.user as any).full_name || 'Phone User',
+                authenticated_at: new Date().toISOString(),
+                patient_profile: {
+                  id: res.data.user.id,
+                  full_name: (res.data.user as any).full_name || 'Phone User',
+                  phone: res.data.user.phone || state.formData.phone,
+                  email: (res.data.user as any).email || '',
+                  patient_status: 'active',
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                },
+              };
+              localStorage.setItem('current_user', JSON.stringify(userData));
+              console.log(
+                '✅ User data saved to localStorage after registration'
+              );
+            }
           }
           this.registrationState.update((s) => ({
             ...s,

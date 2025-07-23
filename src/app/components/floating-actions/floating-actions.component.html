@@ -58,7 +58,6 @@
     <!-- Hover tooltip -->
     <!-- <div class="tooltip">
       <span class="tooltip-text">{{ "AI_CHAT.TITLE" | translate }}</span>
-      <span class="tooltip-number">{{ "AI_CHAT.SUBTITLE" | translate }}</span>
     </div> -->
   </div>
 
@@ -127,7 +126,7 @@
     <div class="chat-content">
       <div class="chat-message bot-message">
         <div class="message-content">
-          {{ "AI_CHAT.WELCOME_MESSAGE" | translate }}
+          {{ "AI_CHAT.WELCOME" | translate }}
         </div>
       </div>
 
@@ -135,10 +134,9 @@
         <div class="quick-reply-title">
           {{ "AI_CHAT.QUICK_REPLIES_TITLE" | translate }}
         </div>
-        @for (reply of ['AI_CHAT.QUICK_REPLIES.0', 'AI_CHAT.QUICK_REPLIES.1',
-        'AI_CHAT.QUICK_REPLIES.2']; track reply) {
-        <button class="quick-reply-btn">
-          {{ reply | translate }}
+        @for (reply of getQuickReplies(); track reply; let i = $index) {
+        <button class="quick-reply-btn" (click)="sendQuickReply(reply)">
+          {{ reply }}
         </button>
         }
       </div>
@@ -147,7 +145,7 @@
     <div class="chat-input">
       <input
         type="text"
-        [placeholder]="'AI_CHAT.INPUT_PLACEHOLDER' | translate"
+        [placeholder]="'AI_CHAT.PLACEHOLDER' | translate"
         class="message-input"
       />
       <button class="send-btn">

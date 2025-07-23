@@ -19,7 +19,10 @@ import { CartComponent } from './components/cart/cart.component';
 import { PaymentResultComponent } from './pages/payment-result-page/payment-result-page.component';
 import { DashboardComponent } from './pages/dashboard-page/dashboard-page.component';
 import { AppointmentResultComponent } from './pages/appointment-result-page/appointment-result-page.component';
+import { AppointmentPaymentPageComponent } from './pages/appointment-payment-page/appointment-payment-page.component';
 import { PeriodTrackingComponent } from './pages/period-tracking-page/period-tracking-page.component';
+import { ErrorPageComponent } from './pages/error-page/error-page.component';
+import { ErrorDemoComponent } from './components/error-demo/error-demo.component';
 
 export const routes: Routes = [
   { path: '', component: HomePageComponent, data: { breadcrumb: 'Home' } },
@@ -46,6 +49,11 @@ export const routes: Routes = [
     path: 'appointment-success',
     component: AppointmentResultComponent,
     data: { breadcrumb: 'Appointment Success' },
+  },
+  {
+    path: 'appointment-payment',
+    component: AppointmentPaymentPageComponent,
+    data: { breadcrumb: 'Appointment Payment' },
   },
   {
     path: 'period-tracking',
@@ -108,6 +116,21 @@ export const routes: Routes = [
       import('./pages/auth-callback-page/auth-callback.component').then(
         (m) => m.AuthCallbackComponent
       ),
+  },
+  {
+    path: 'error',
+    component: ErrorPageComponent,
+    data: { breadcrumb: 'Error' },
+  },
+  {
+    path: 'error-demo',
+    component: ErrorDemoComponent,
+    data: { breadcrumb: 'Error Demo' },
+  },
+  {
+    path: '**',
+    component: ErrorPageComponent,
+    data: { breadcrumb: 'Page Not Found' },
   },
 ];
 

@@ -91,3 +91,44 @@ export interface HealthcarePaymentSummary {
     phone: string;
   };
 }
+
+// Appointment Payment Models
+export interface AppointmentPaymentData {
+  appointment_data: {
+    full_name: string;
+    phone: string;
+    email: string;
+    gender: string;
+    date_of_birth: string;
+    visit_type: string;
+    schedule: any;
+    message: string;
+    doctor_id: string;
+    category_id: string | undefined;
+    slot_id: string;
+    preferred_date: string;
+    preferred_time: string | undefined;
+    booking_type: string;
+  };
+  payment_amount: number;
+  doctor_name?: string;
+  service_name?: string;
+  appointment_date?: string;
+  appointment_time?: string;
+}
+
+export interface AppointmentPaymentRequest extends VNPayPaymentRequest {
+  appointment_data: AppointmentPaymentData['appointment_data'];
+  doctor_name?: string;
+  service_name?: string;
+}
+
+export interface AppointmentPaymentResult {
+  success: boolean;
+  appointment_id?: string;
+  guest_appointment_id?: string;
+  payment_transaction_id?: string;
+  message: string;
+  appointment_details?: any;
+  payment_details?: VNPayCallbackData;
+}

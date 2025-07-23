@@ -1,18 +1,6 @@
 <body class="bg-[#f9f9f9] min-h-screen font-poppins">
-  <!-- Navigation -->
-  <nav class="w-full sticky top-0 z-30 bg-white shadow">
-    <div class="max-w-7xl mx-auto h-20 flex items-center justify-center">
-      <div class="h-16 w-48 flex items-center justify-center">
-        <a href="/" class="h-full w-[90%] flex items-center justify-center">
-          <img
-            class="block h-full w-full object-cover"
-            src="./GenderHealthcareLogo.svg"
-            alt="logo"
-          />
-        </a>
-      </div>
-    </div>
-  </nav>
+  <!-- Header Component -->
+  <app-header></app-header>
 
   <!-- Progress Bar -->
   <div class="relative w-full bg-white shadow-sm">
@@ -32,7 +20,8 @@
       <strong>Debug Info:</strong>
       Step: {{ currentStep }} | Auth: {{ isUserLoggedIn() ? "Yes" : "No" }} |
       Type: {{ bookingType || "None" }} | Profile Step:
-      {{ shouldShowProfileStep() ? "Show" : "Hide" }}
+      {{ shouldShowProfileStep() ? "Show" : "Hide" }} | UseProfile:
+      {{ booking.useProfile || "None" }}
     </div>
 
     <!-- Error/Success -->
@@ -201,10 +190,10 @@
           </svg>
         </div>
         <h2 class="text-2xl font-bold text-gray-800 mb-2">
-          Who is this appointment for?
+          {{ "APPOINTMENT.PROFILE_SELECTION.TITLE" | translate }}
         </h2>
         <p class="text-gray-600">
-          Choose whether you're booking for yourself or someone else
+          {{ "APPOINTMENT.PROFILE_SELECTION.SUBTITLE" | translate }}
         </p>
       </div>
 
@@ -234,15 +223,19 @@
               </svg>
             </div>
             <h3 class="text-lg font-semibold text-gray-800 mb-2">
-              Book for Myself
+              {{ "APPOINTMENT.PROFILE_SELECTION.USE_MY_PROFILE" | translate }}
             </h3>
             <p class="text-sm text-gray-600 mb-4">
-              Use your saved profile information to quickly book an appointment
+              {{
+                "APPOINTMENT.PROFILE_SELECTION.USE_MY_PROFILE_DESC" | translate
+              }}
             </p>
             <div
               class="inline-flex items-center text-blue-600 text-sm font-medium"
             >
-              <span>Continue with my profile</span>
+              <span>{{
+                "APPOINTMENT.PROFILE_SELECTION.USE_MY_PROFILE" | translate
+              }}</span>
               <svg
                 class="w-4 h-4 ml-1"
                 fill="none"
@@ -284,15 +277,20 @@
               </svg>
             </div>
             <h3 class="text-lg font-semibold text-gray-800 mb-2">
-              Book for Someone Else
+              {{ "APPOINTMENT.PROFILE_SELECTION.BOOK_FOR_ANOTHER" | translate }}
             </h3>
             <p class="text-sm text-gray-600 mb-4">
-              Enter new patient information for a family member or friend
+              {{
+                "APPOINTMENT.PROFILE_SELECTION.BOOK_FOR_ANOTHER_DESC"
+                  | translate
+              }}
             </p>
             <div
               class="inline-flex items-center text-green-600 text-sm font-medium"
             >
-              <span>Enter new details</span>
+              <span>{{
+                "APPOINTMENT.PROFILE_SELECTION.BOOK_FOR_ANOTHER" | translate
+              }}</span>
               <svg
                 class="w-4 h-4 ml-1"
                 fill="none"
@@ -331,7 +329,7 @@
               d="M15 19l-7-7 7-7"
             ></path>
           </svg>
-          Back to Booking Type
+          {{ "APPOINTMENT.BUTTONS.BACK" | translate }}
         </button>
       </div>
     </div>
@@ -1237,4 +1235,7 @@
     </form>
     }
   </div>
+
+  <!-- Footer Component -->
+  <app-footer></app-footer>
 </body>

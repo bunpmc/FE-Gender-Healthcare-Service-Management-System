@@ -281,6 +281,15 @@ export class FloatingActionsComponent implements AfterViewChecked, OnDestroy {
     });
   }
 
+  getQuickReplies(): string[] {
+    return [
+      'How can I book an appointment?',
+      'What services do you offer?',
+      'What are your operating hours?',
+      'How can I contact support?',
+    ];
+  }
+
   sendQuickReply(reply: string): void {
     this.sendMessage(reply);
   }

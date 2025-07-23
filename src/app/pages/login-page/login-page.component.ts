@@ -159,6 +159,34 @@ export class LoginComponent {
 
             if (token) {
               console.log('💾 Token found, processing storage...');
+
+              // Save user data if available in response
+              if (res.data?.user || res.user) {
+                const userData = res.data?.user || res.user;
+                const userDataToSave = {
+                  id: userData.id || 'phone-user',
+                  phone: userData.phone || phone,
+                  email: userData.email || '',
+                  name: userData.full_name || userData.name || 'Phone User',
+                  authenticated_at: new Date().toISOString(),
+                  patient_profile: {
+                    id: userData.id || 'phone-user',
+                    full_name:
+                      userData.full_name || userData.name || 'Phone User',
+                    phone: userData.phone || phone,
+                    email: userData.email || '',
+                    patient_status: 'active',
+                    created_at: userData.created_at || new Date().toISOString(),
+                    updated_at: userData.updated_at || new Date().toISOString(),
+                  },
+                };
+                localStorage.setItem(
+                  'current_user',
+                  JSON.stringify(userDataToSave)
+                );
+                console.log('✅ User data saved to localStorage after login');
+              }
+
               // --- Xử lý lưu token + remember me ---
               if (rememberMe) {
                 console.log('💾 Saving to localStorage (Remember Me = true)');
