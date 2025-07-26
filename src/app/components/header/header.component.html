@@ -220,6 +220,8 @@
       </ul>
     </div>
     <ul class="h-full gap-2 lg:gap-6 flex items-center justify-end">
+
+
       <!-- Cart Icon -->
       <li class="flex py-5 sm:w-auto sm:py-0 relative">
         <a routerLink="/cart" class="flex items-center cursor-pointer relative">
@@ -237,12 +239,12 @@
               d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
             />
           </svg>
-          <!-- Cart Count Badge -->
+          <!-- Cart Count Badge - Force Update from Service -->
           <span
-            *ngIf="cart.itemCount > 0"
-            class="absolute -top-2 -right-2 bg-[#e91e63] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center"
+            class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-[20px] flex items-center justify-center z-30 border-2 border-white shadow-lg"
+            style="font-size: 12px; line-height: 1; color: white !important; position: absolute !important;"
           >
-            {{ cart.itemCount }}
+            {{ getCartCount() }}
           </span>
         </a>
       </li>
@@ -399,7 +401,7 @@
       <li>
         <div class="btn-conteiner">
           <a class="btn-content" routerLink="/appointment">
-            <span class="btn-title">{{ "USER.BOOK_NOW" | translate }}</span>
+            <span class="btn-title text-white">{{ "USER.BOOK_NOW" | translate }}</span>
             <span class="icon-arrow">
               <!-- svg giữ nguyên -->
               <svg

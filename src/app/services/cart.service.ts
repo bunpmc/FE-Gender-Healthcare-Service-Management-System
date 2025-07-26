@@ -26,7 +26,10 @@ export class CartService {
 
   // Add item to cart
   addToCart(item: CartItem): void {
+    console.log('🛒 Adding to cart:', item);
     const currentCart = this.getCurrentCart();
+    console.log('🛒 Current cart before:', currentCart);
+
     const existingItemIndex = currentCart.items.findIndex(
       cartItem => cartItem.service_id === item.service_id
     );
@@ -34,9 +37,11 @@ export class CartService {
     if (existingItemIndex > -1) {
       // Update quantity if item already exists
       currentCart.items[existingItemIndex].quantity += item.quantity;
+      console.log('🛒 Updated existing item');
     } else {
       // Add new item to cart
       currentCart.items.push({ ...item });
+      console.log('🛒 Added new item');
     }
 
     this.updateCart(currentCart);
@@ -105,6 +110,12 @@ export class CartService {
     cart.total = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     cart.itemCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
+    console.log('🛒 Cart updated:', {
+      itemCount: cart.itemCount,
+      total: cart.total,
+      items: cart.items.length
+    });
+
     // Update BehaviorSubject
     this.cartSubject.next(cart);
 
@@ -117,22 +128,32 @@ export class CartService {
     try {
       localStorage.setItem('healthcare_cart', JSON.stringify(cart));
     } catch (error) {
-      console.error('Error saving cart to localStorage:', error);
+      // Silent fail for localStorage issues
     }
   }
 
   // Load cart from localStorage
   private loadCartFromStorage(): void {
+    console.log('🔄 Loading cart from localStorage...');
     try {
       const savedCart = localStorage.getItem('healthcare_cart');
+      console.log('💾 Saved cart data:', savedCart);
+
       if (savedCart) {
         const cart: Cart = JSON.parse(savedCart);
+        console.log('📦 Parsed cart:', cart);
+
         // Recalculate totals in case of data inconsistency
         this.updateCart(cart);
+      } else {
+        console.log('📭 No saved cart found, initializing empty cart');
+        // Initialize with empty cart and emit
+        const emptyCart = this.createEmptyCart();
+        this.cartSubject.next(emptyCart);
       }
     } catch (error) {
-      console.error('Error loading cart from localStorage:', error);
-      // Initialize with empty cart if loading fails
+      console.error('❌ Error loading cart:', error);
+      // Silent fail for localStorage issues
       this.clearCart();
     }
   }
@@ -151,5 +172,16 @@ export class CartService {
     const serviceNames = cart.items.map(item => item.service_name).join(', ');
     const orderNumber = Date.now().toString().slice(-6);
     return `Payment for Order #${orderNumber}: ${serviceNames}`;
+  }
+
+
+
+  // Create empty cart
+  private createEmptyCart(): Cart {
+    return {
+      items: [],
+      total: 0,
+      itemCount: 0
+    };
   }
 }

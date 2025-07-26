@@ -56,8 +56,24 @@ export class ServicePageComponent implements OnInit {
         this.categories.set([allText, ...uniqueCats]);
         this.loading.set(false);
       },
-      error: () => {
-        this.loading.set(false);
+      error: (error) => {
+        // Fallback to mock data
+        this.medicalService.getMockServices().subscribe({
+          next: (mockData: MedicalService[]) => {
+            this.services.set(mockData || []);
+            const categoryNames = (mockData || [])
+              .map((s: MedicalService) => s.service_categories?.category_name)
+              .filter((name): name is string => Boolean(name));
+            const uniqueCats = Array.from(new Set(categoryNames));
+            this.categories.set([allText, ...uniqueCats]);
+            this.loading.set(false);
+          },
+          error: () => {
+            this.services.set([]);
+            this.categories.set([allText]);
+            this.loading.set(false);
+          }
+        });
       },
     });
   }

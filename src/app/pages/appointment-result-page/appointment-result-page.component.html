@@ -10,13 +10,13 @@
       ></div>
       @if (isProcessing) {
       <p class="text-blue-600 text-lg font-medium">
-        Creating your appointment...
+        {{ "APPOINTMENT.RESULT.CREATING_APPOINTMENT" | translate }}
       </p>
       <p class="text-blue-500 text-sm mt-2">
-        Please wait while we process your booking
+        {{ "APPOINTMENT.RESULT.PROCESSING_BOOKING" | translate }}
       </p>
       } @else {
-      <p class="text-blue-600 text-lg font-medium">Loading...</p>
+      <p class="text-blue-600 text-lg font-medium">{{ "APPOINTMENT.RESULT.LOADING" | translate }}</p>
       }
     </div>
     }

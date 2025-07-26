@@ -148,7 +148,17 @@
     "RETRY": "Tải lại",
     "NO_DATA": "Chưa có bài viết nào.",
     "READ_MORE": "Xem chi tiết →",
-    "LOAD_ERROR": "Không tải được bài viết. Vui lòng thử lại."
+    "LOAD_ERROR": "Không tải được bài viết. Vui lòng thử lại.",
+    "CATEGORIES": {
+      "COMMUNITY": "Cộng đồng",
+      "MENTAL_HEALTH": "Sức khỏe tâm thần",
+      "GENDER_STORIES": "Câu chuyện giới tính",
+      "LEGAL": "Pháp lý",
+      "EDUCATION": "Giáo dục"
+    },
+    "ERRORS": {
+      "LOAD_FAILED": "Không thể tải bài viết. Vui lòng thử lại."
+    }
   },
   "AI_CHAT": {
     "TITLE": "Trợ lý AI",
@@ -297,6 +307,35 @@
       "GO_BACK": "Quay lại đặt lịch",
       "LOADING": "Đang tải thông tin lịch hẹn...",
       "SECURE_PAYMENT": "Thanh toán an toàn được hỗ trợ bởi VNPay"
+    },
+    "RESULT": {
+      "SUCCESS_TITLE": "Đặt lịch hẹn thành công!",
+      "SUCCESS_MESSAGE": "Lịch hẹn của bạn đã được xác nhận. Chúng tôi sẽ gửi xác nhận cho bạn sớm.",
+      "ERROR_TITLE": "Đặt lịch thất bại",
+      "ERROR_MESSAGE": "Chúng tôi không thể hoàn tất việc đặt lịch hẹn của bạn. Vui lòng thử lại.",
+      "APPOINTMENT_DETAILS": "Chi tiết lịch hẹn",
+      "APPOINTMENT_ID": "Mã lịch hẹn",
+      "DATE": "Ngày",
+      "TIME": "Giờ",
+      "STATUS": "Trạng thái",
+      "PATIENT_INFO": "Thông tin bệnh nhân",
+      "FULL_NAME": "Họ và tên",
+      "PHONE": "Số điện thoại",
+      "EMAIL": "Email",
+      "SCHEDULE": "Lịch trình",
+      "REASON": "Lý do khám",
+      "NEXT_STEPS": "Các bước tiếp theo",
+      "STEP1": "Bạn sẽ nhận được email/SMS xác nhận sớm",
+      "STEP2": "Vui lòng đến sớm 15 phút trước giờ hẹn",
+      "STEP3": "Mang theo CMND/CCCD và các tài liệu y tế liên quan",
+      "ERROR_DETAILS": "Chi tiết lỗi",
+      "TECHNICAL_DETAILS": "Chi tiết kỹ thuật",
+      "SUBMITTED_DATA": "Thông tin đã gửi",
+      "GO_HOME": "Về trang chủ",
+      "TRY_AGAIN": "Thử lại",
+      "CREATING_APPOINTMENT": "Đang tạo lịch hẹn của bạn...",
+      "PROCESSING_BOOKING": "Vui lòng chờ trong khi chúng tôi xử lý đặt lịch của bạn",
+      "LOADING": "Đang tải..."
     }
   },
   "SERVICES": {
@@ -426,8 +465,71 @@
       "BACK": "Quay Lại"
     }
   },
+  "CART": {
+    "TITLE": "Giỏ hàng",
+    "ITEMS": "sản phẩm",
+    "EMPTY TITLE": "Giỏ hàng của bạn đang trống",
+    "EMPTY MESSAGE": "Thêm một số dịch vụ để bắt đầu",
+    "BROWSE SERVICES": "Duyệt dịch vụ",
+    "REMOVE ITEM": "Xóa sản phẩm",
+    "TOTAL DURATION": "Tổng thời gian",
+    "SUBTOTAL": "Tạm tính",
+    "TOTAL": "Tổng cộng",
+    "CLEAR CART": "Xóa giỏ hàng",
+    "CONTINUE SHOPPING": "Tiếp tục mua sắm",
+    "PROCEED TO PAYMENT": "Tiến hành thanh toán"
+  },
+  "DASHBOARD": {
+    "OVERVIEW": "Tổng quan bảng điều khiển",
+    "REFRESH": "Làm mới",
+    "LOADING": "Đang tải...",
+    "PROFILE": "Hồ sơ",
+    "APPOINTMENTS": "Lịch hẹn",
+    "PENDING": "Chờ xử lý",
+    "CONFIRMED": "Đã xác nhận",
+    "COMPLETED": "Hoàn thành",
+    "LOADING_TEXT": "Đang tải dữ liệu bảng điều khiển...",
+    "TRY_AGAIN": "Thử lại",
+    "DEBUG_TOKEN": "Debug Token",
+    "REFRESH_TOKEN": "Làm mới Token"
+  },
+  "PAYMENT": {
+    "VERIFYING": "Đang xác minh thanh toán",
+    "PLEASE_WAIT": "Vui lòng chờ trong khi chúng tôi xác minh thanh toán của bạn...",
+    "ERROR_TITLE": "Lỗi thanh toán",
+    "GO_HOME": "Về trang chủ",
+    "CONTINUE_SHOPPING": "Tiếp tục mua sắm",
+    "SUCCESS_TITLE": "Thanh toán thành công!",
+    "SUCCESS_MESSAGE": "Thanh toán của bạn đã được xử lý thành công.",
+    "TRANSACTION_DETAILS": "Chi tiết giao dịch",
+    "TRANSACTION_ID": "Mã giao dịch",
+    "AMOUNT": "Số tiền",
+    "BANK_CODE": "Mã ngân hàng",
+    "PAYMENT_DATE": "Ngày thanh toán",
+    "ORDER_INFO": "Thông tin đơn hàng",
+    "PRINT_RECEIPT": "In hóa đơn",
+    "FAILURE_TITLE": "Thanh toán thất bại",
+    "REFERENCE_ID": "Mã tham chiếu",
+    "RESPONSE_CODE": "Mã phản hồi",
+    "ATTEMPT_DATE": "Ngày thử",
+    "TRY_AGAIN": "Thử lại",
+    "NEED_HELP": "Cần hỗ trợ?",
+    "SUPPORT_MESSAGE": "Nếu bạn có bất kỳ câu hỏi nào về thanh toán, vui lòng liên hệ đội ngũ hỗ trợ của chúng tôi."
+  },
+  "CONSULTATION": {
+    "SUCCESS": {
+      "MESSAGE_SENT": "Tin nhắn của bạn đã được gửi thành công! Chúng tôi sẽ phản hồi sớm nhất có thể."
+    },
+    "ERRORS": {
+      "SEND_FAILED": "Không thể gửi tin nhắn. Vui lòng thử lại."
+    }
+  },
   "COMMON": {
     "BACK": "Quay lại",
-    "CONTINUE": "Tiếp tục"
+    "CONTINUE": "Tiếp tục",
+    "ALL": "Tất cả",
+    "MALE": "Nam",
+    "FEMALE": "Nữ",
+    "OTHER": "Khác"
   }
 }

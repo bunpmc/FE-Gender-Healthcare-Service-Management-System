@@ -6,6 +6,7 @@ import {
   inject,
   OnInit,
   OnDestroy,
+  ChangeDetectorRef,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
@@ -36,6 +37,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private cartService = inject(CartService);
   private router = inject(Router);
   private translate = inject(TranslateService); // THÊM
+  private cdr = inject(ChangeDetectorRef);
   private destroy$ = new Subject<void>();
 
   @HostListener('window:scroll', [])
@@ -52,13 +54,20 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.cartService.cart$
       .pipe(takeUntil(this.destroy$))
       .subscribe((cart: Cart) => {
+        console.log('🎯 Header cart update:', cart);
         this.cart = cart;
+        this.cdr.detectChanges();
       });
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  // Get cart count directly from service
+  getCartCount(): number {
+    return this.cartService.getItemCount();
   }
 
   changeLang(lang: string) {

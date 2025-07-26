@@ -1,21 +1,19 @@
 <div class="cart-container">
   <div class="cart-header">
     <h2 class="cart-title">
-      🛒
-      {{ "TITLE" | translate }}
+      {{ "CART.TITLE" | translate }}
     </h2>
     <span class="cart-count" *ngIf="cart.itemCount > 0">
-      {{ cart.itemCount }} {{ "ITEMS" | translate }}
+      {{ cart.itemCount }} {{ "CART.ITEMS" | translate }}
     </span>
   </div>
 
   <!-- Empty Cart State -->
   <div class="empty-cart" *ngIf="isCartEmpty()">
-    <div class="empty-cart-icon">🛒</div>
-    <h3>{{ "EMPTY TITLE" | translate }}</h3>
-    <p>{{ "EMPTY MESSAGE" | translate }}</p>
+    <h3>{{ "CART.EMPTY TITLE" | translate }}</h3>
+    <p>{{ "CART.EMPTY MESSAGE" | translate }}</p>
     <a routerLink="/service" class="btn btn-primary">
-      {{ "BROWSE SERVICES" | translate }}
+      {{ "CART.BROWSE SERVICES" | translate }}
     </a>
   </div>
 
@@ -40,8 +38,7 @@
             {{ item.description }}
           </p>
           <div class="item-duration" *ngIf="item.duration">
-            ⏰
-            {{ formatDuration(item.duration) }}
+            Duration: {{ formatDuration(item.duration) }}
           </div>
         </div>
 
@@ -73,9 +70,9 @@
           <button
             class="remove-btn"
             (click)="removeItem(item.service_id)"
-            [title]="'REMOVE ITEM' | translate"
+            [title]="'CART.REMOVE ITEM' | translate"
           >
-            🗑️
+            Remove
           </button>
         </div>
       </div>
@@ -85,8 +82,7 @@
     <div class="cart-summary">
       <div class="summary-row" *ngIf="getTotalDuration() > 0">
         <span class="summary-label">
-          ⏰
-          {{ "TOTAL DURATION" | translate }}:
+          {{ "CART.TOTAL DURATION" | translate }}:
         </span>
         <span class="summary-value">{{
           formatDuration(getTotalDuration())
@@ -94,12 +90,12 @@
       </div>
 
       <div class="summary-row subtotal">
-        <span class="summary-label">{{ "SUBTOTAL" | translate }}:</span>
+        <span class="summary-label">{{ "CART.SUBTOTAL" | translate }}:</span>
         <span class="summary-value">{{ formatPrice(cart.total) }}</span>
       </div>
 
       <div class="summary-row total">
-        <span class="summary-label">{{ "TOTAL" | translate }}:</span>
+        <span class="summary-label">{{ "CART.TOTAL" | translate }}:</span>
         <span class="summary-value">{{ formatPrice(cart.total) }}</span>
       </div>
     </div>
@@ -107,18 +103,15 @@
     <!-- Cart Actions -->
     <div class="cart-actions">
       <button class="btn btn-secondary" (click)="clearCart()">
-        🗑️
-        {{ "CLEAR CART" | translate }}
+        {{ "CART.CLEAR CART" | translate }}
       </button>
 
       <a routerLink="/service" class="btn btn-outline">
-        ←
-        {{ "CONTINUE SHOPPING" | translate }}
+        {{ "CART.CONTINUE SHOPPING" | translate }}
       </a>
 
       <a routerLink="/transaction" class="btn btn-primary">
-        💳
-        {{ "PROCEED TO PAYMENT" | translate }}
+        {{ "CART.PROCEED TO PAYMENT" | translate }}
       </a>
     </div>
   </div>

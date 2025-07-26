@@ -148,7 +148,17 @@
     "RETRY": "Retry",
     "NO_DATA": "No blogs available at the moment.",
     "READ_MORE": "Read more →",
-    "LOAD_ERROR": "Unable to load latest blogs. Please try again."
+    "LOAD_ERROR": "Unable to load latest blogs. Please try again.",
+    "CATEGORIES": {
+      "COMMUNITY": "Community",
+      "MENTAL_HEALTH": "Mental Health",
+      "GENDER_STORIES": "Gender Stories",
+      "LEGAL": "Legal",
+      "EDUCATION": "Education"
+    },
+    "ERRORS": {
+      "LOAD_FAILED": "Failed to load blogs. Please try again."
+    }
   },
   "AI_CHAT": {
     "TITLE": "AI Assistant",
@@ -297,6 +307,35 @@
       "GO_BACK": "Back to Appointment",
       "LOADING": "Loading appointment details...",
       "SECURE_PAYMENT": "Secure payment powered by VNPay"
+    },
+    "RESULT": {
+      "SUCCESS_TITLE": "Appointment Booked Successfully!",
+      "SUCCESS_MESSAGE": "Your appointment has been confirmed. We'll send you a confirmation shortly.",
+      "ERROR_TITLE": "Booking Failed",
+      "ERROR_MESSAGE": "We couldn't complete your appointment booking. Please try again.",
+      "APPOINTMENT_DETAILS": "Appointment Details",
+      "APPOINTMENT_ID": "Appointment ID",
+      "DATE": "Date",
+      "TIME": "Time",
+      "STATUS": "Status",
+      "PATIENT_INFO": "Patient Information",
+      "FULL_NAME": "Full Name",
+      "PHONE": "Phone",
+      "EMAIL": "Email",
+      "SCHEDULE": "Schedule",
+      "REASON": "Reason for Visit",
+      "NEXT_STEPS": "Next Steps",
+      "STEP1": "You will receive a confirmation email/SMS shortly",
+      "STEP2": "Please arrive 15 minutes before your appointment time",
+      "STEP3": "Bring a valid ID and any relevant medical documents",
+      "ERROR_DETAILS": "Error Details",
+      "TECHNICAL_DETAILS": "Technical Details",
+      "SUBMITTED_DATA": "Submitted Information",
+      "GO_HOME": "Go Home",
+      "TRY_AGAIN": "Try Again",
+      "CREATING_APPOINTMENT": "Creating your appointment...",
+      "PROCESSING_BOOKING": "Please wait while we process your booking",
+      "LOADING": "Loading..."
     }
   },
   "SERVICES": {
@@ -426,8 +465,71 @@
       "BACK": "Go Back"
     }
   },
+  "CART": {
+    "TITLE": "Shopping Cart",
+    "ITEMS": "items",
+    "EMPTY TITLE": "Your cart is empty",
+    "EMPTY MESSAGE": "Add some services to get started",
+    "BROWSE SERVICES": "Browse Services",
+    "REMOVE ITEM": "Remove item",
+    "TOTAL DURATION": "Total Duration",
+    "SUBTOTAL": "Subtotal",
+    "TOTAL": "Total",
+    "CLEAR CART": "Clear Cart",
+    "CONTINUE SHOPPING": "Continue Shopping",
+    "PROCEED TO PAYMENT": "Proceed to Payment"
+  },
+  "DASHBOARD": {
+    "OVERVIEW": "Dashboard Overview",
+    "REFRESH": "Refresh",
+    "LOADING": "Loading...",
+    "PROFILE": "Profile",
+    "APPOINTMENTS": "Appointments",
+    "PENDING": "Pending",
+    "CONFIRMED": "Confirmed",
+    "COMPLETED": "Completed",
+    "LOADING_TEXT": "Loading dashboard data...",
+    "TRY_AGAIN": "Try Again",
+    "DEBUG_TOKEN": "Debug Token",
+    "REFRESH_TOKEN": "Refresh Token"
+  },
+  "PAYMENT": {
+    "VERIFYING": "Verifying Payment",
+    "PLEASE_WAIT": "Please wait while we verify your payment...",
+    "ERROR_TITLE": "Payment Error",
+    "GO_HOME": "Go Home",
+    "CONTINUE_SHOPPING": "Continue Shopping",
+    "SUCCESS_TITLE": "Payment Successful!",
+    "SUCCESS_MESSAGE": "Your payment has been processed successfully.",
+    "TRANSACTION_DETAILS": "Transaction Details",
+    "TRANSACTION_ID": "Transaction ID",
+    "AMOUNT": "Amount",
+    "BANK_CODE": "Bank Code",
+    "PAYMENT_DATE": "Payment Date",
+    "ORDER_INFO": "Order Information",
+    "PRINT_RECEIPT": "Print Receipt",
+    "FAILURE_TITLE": "Payment Failed",
+    "REFERENCE_ID": "Reference ID",
+    "RESPONSE_CODE": "Response Code",
+    "ATTEMPT_DATE": "Attempt Date",
+    "TRY_AGAIN": "Try Again",
+    "NEED_HELP": "Need Help?",
+    "SUPPORT_MESSAGE": "If you have any questions about your payment, please contact our support team."
+  },
+  "CONSULTATION": {
+    "SUCCESS": {
+      "MESSAGE_SENT": "Your message has been sent successfully! We will get back to you soon."
+    },
+    "ERRORS": {
+      "SEND_FAILED": "Failed to send message. Please try again."
+    }
+  },
   "COMMON": {
     "BACK": "Back",
-    "CONTINUE": "Continue"
+    "CONTINUE": "Continue",
+    "ALL": "All",
+    "MALE": "Male",
+    "FEMALE": "Female",
+    "OTHER": "Other"
   }
 }

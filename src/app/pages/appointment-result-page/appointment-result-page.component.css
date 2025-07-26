@@ -1,5 +1,10 @@
 /* Custom animations and styles for appointment result page */
 
+/* Default text color for appointment result */
+.appointment-result-container {
+  color: #000000;
+}
+
 .fade-in {
   animation: fadeIn 0.5s ease-in-out;
 }

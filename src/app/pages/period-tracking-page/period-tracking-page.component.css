@@ -1,5 +1,171 @@
 /* ================== PERIOD TRACKING STYLES ================== */
 
+/* Default text color for period tracking */
+.period-tracking-container {
+  color: #000000;
+}
+
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ================== BUTTON TEXT COLOR FIXES ================== */
+
+/* Force white text on all gradient buttons */
+button.bg-gradient-to-r,
+button.bg-gradient-to-br,
+button[class*="bg-gradient"],
+.bg-gradient-to-r,
+.bg-gradient-to-br {
+  color: white !important;
+}
+
+/* Force white text on specific gradient combinations */
+button[class*="from-pink-500"],
+button[class*="from-pink-600"],
+button[class*="from-purple-500"],
+button[class*="from-purple-600"],
+button[class*="from-green-400"],
+button[class*="from-green-500"],
+button[class*="to-pink-500"],
+button[class*="to-pink-600"],
+button[class*="to-purple-500"],
+button[class*="to-purple-600"],
+button[class*="to-green-400"],
+button[class*="to-green-500"] {
+  color: white !important;
+}
+
+/* Pink/Purple solid buttons should have white text */
+button.bg-pink-500,
+button.bg-pink-600,
+button.bg-purple-500,
+button.bg-purple-600,
+.bg-pink-500,
+.bg-pink-600,
+.bg-purple-500,
+.bg-purple-600 {
+  color: white !important;
+}
+
+/* Success/Green buttons should have white text */
+button.bg-green-400,
+button.bg-green-500,
+button.bg-green-600,
+.bg-green-400,
+.bg-green-500,
+.bg-green-600 {
+  color: white !important;
+}
+
+/* Override for text-white class - highest specificity */
+.text-white,
+button.text-white,
+*.text-white {
+  color: white !important;
+}
+
+/* SVG icons inside buttons should inherit white color */
+button[class*="bg-gradient"] svg,
+button[class*="from-pink"] svg,
+button[class*="from-purple"] svg,
+button[class*="from-green"] svg,
+button.text-white svg {
+  color: inherit;
+}
+
+/* ================== ADDITIONAL TEXT COLOR FIXES ================== */
+
+/* Ensure dark backgrounds have white text */
+.bg-black,
+.bg-gray-800,
+.bg-gray-900 {
+  color: white !important;
+}
+
+/* Loading spinner text */
+.animate-spin {
+  color: inherit !important;
+}
+
+/* Modal overlay text should be white when on dark background */
+.bg-black.bg-opacity-50 {
+  color: white !important;
+}
+
+/* Ensure proper contrast for all text elements */
+.text-gray-800,
+.text-gray-900 {
+  color: #1f2937 !important;
+}
+
+.text-gray-700 {
+  color: #374151 !important;
+}
+
+.text-gray-600 {
+  color: #4b5563 !important;
+}
+
+.text-gray-500 {
+  color: #6b7280 !important;
+}
+
+/* ================== CUSTOM DATE PICKER STYLES ================== */
+
+/* Custom Date Picker Styles */
+input[type="date"] {
+  position: relative;
+  background: white;
+  color: #374151;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  right: 12px;
+  color: #9CA3AF;
+  cursor: pointer;
+  font-size: 16px;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  color: #EC4899;
+}
+
+input[type="date"]:focus::-webkit-calendar-picker-indicator {
+  color: #EC4899;
+}
+
+/* Firefox date picker */
+input[type="date"]::-moz-focus-inner {
+  border: 0;
+}
+
+/* Remove default date picker styling in some browsers */
+input[type="date"]::-webkit-inner-spin-button,
+input[type="date"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Custom focus states */
+input[type="date"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
+}
+
+/* Placeholder-like styling when empty */
+input[type="date"]:invalid {
+  color: #9CA3AF;
+}
+
+input[type="date"]:valid {
+  color: #374151;
+}
+
 /* ================== RESPONSIVE LAYOUT ================== */
 @media (max-width: 1279px) {
   /* On mobile and tablet, stack columns vertically */

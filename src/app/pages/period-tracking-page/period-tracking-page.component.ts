@@ -49,6 +49,9 @@ export class PeriodTrackingComponent implements OnInit {
   showLogModal = signal(false);
   showLogForm = signal(false);
   showStatsModal = signal(false);
+  showCalendar = signal(false);
+  showSuccessModal = signal(false);
+  successPredictions = signal<any>(null);
 
   // =========== DATA SIGNALS ===========
   periodHistory = signal<PeriodEntry[]>([]);
@@ -79,6 +82,87 @@ export class PeriodTrackingComponent implements OnInit {
     return new Date().toISOString().split('T')[0];
   }
 
+  // Set default date when opening form
+  openLogForm(): void {
+    // Reset form and set default start_date to today
+    this.resetForm();
+    this.logForm.start_date = this.getTodayDateString();
+    this.showLogForm.set(true);
+  }
+
+  // Get max date for date inputs (today)
+  getMaxDate(): string {
+    return this.getTodayDateString();
+  }
+
+  // Validate date range
+  validateDateRange(): boolean {
+    if (!this.logForm.start_date) return false;
+    if (!this.logForm.end_date) return true; // End date is optional
+
+    const startDate = new Date(this.logForm.start_date);
+    const endDate = new Date(this.logForm.end_date);
+
+    return endDate >= startDate;
+  }
+
+  // Calculate predictions after logging period
+  calculatePredictions(newPeriod: any): void {
+    const history = this.periodHistory();
+
+    // Use default 28-day cycle for first period, or calculated average
+    let averageCycle = 28;
+    let periodLength = 5;
+
+    if (history.length > 0) {
+      // Calculate from existing data
+      averageCycle = this.averageCycleLength;
+      periodLength = this.getPeriodLength();
+    } else {
+      // First period - use defaults but calculate period length if end_date provided
+      if (newPeriod.end_date) {
+        const start = new Date(newPeriod.start_date);
+        const end = new Date(newPeriod.end_date);
+        periodLength = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      }
+    }
+
+    // Calculate next period date
+    const lastPeriodStart = new Date(newPeriod.start_date);
+    const nextPeriodDate = new Date(lastPeriodStart);
+    nextPeriodDate.setDate(nextPeriodDate.getDate() + averageCycle);
+
+    // Calculate fertile window (typically 14 days before next period)
+    const ovulationDate = new Date(nextPeriodDate);
+    ovulationDate.setDate(ovulationDate.getDate() - 14);
+
+    const fertileStart = new Date(ovulationDate);
+    fertileStart.setDate(fertileStart.getDate() - 5);
+
+    const fertileEnd = new Date(ovulationDate);
+    fertileEnd.setDate(fertileEnd.getDate() + 1);
+
+    // Calculate days until next period
+    const today = new Date();
+    const daysUntil = Math.ceil((nextPeriodDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    const predictions = {
+      nextPeriodDate: this.formatDate(nextPeriodDate.toISOString().split('T')[0]),
+      daysUntilNextPeriod: Math.max(0, daysUntil),
+      averageCycleLength: averageCycle,
+      periodLength: periodLength,
+      ovulationDate: this.formatDate(ovulationDate.toISOString().split('T')[0]),
+      fertileWindow: {
+        start: this.formatDate(fertileStart.toISOString().split('T')[0]),
+        end: this.formatDate(fertileEnd.toISOString().split('T')[0])
+      },
+      totalCyclesTracked: history.length + 1,
+      isFirstPeriod: history.length === 0
+    };
+
+    this.successPredictions.set(predictions);
+  }
+
   // =========== LIFECYCLE ===========
   ngOnInit(): void {
     this.loadPeriodData();
@@ -95,25 +179,24 @@ export class PeriodTrackingComponent implements OnInit {
       next: (history) => {
         this.periodHistory.set(history);
         this.generateCalendar();
+
+        // Load period stats after history is loaded
+        this.periodService.getPeriodStats().subscribe({
+          next: (stats) => {
+            this.periodStats.set(stats);
+            this.isLoading.set(false);
+          },
+          error: (err) => {
+            this.error.set(
+              this.translate.instant('PERIOD.ERRORS.LOAD_STATS_FAILED')
+            );
+            this.isLoading.set(false);
+          },
+        });
       },
       error: (err) => {
-        console.error('Error loading period history:', err);
         this.error.set(
           this.translate.instant('PERIOD.ERRORS.LOAD_HISTORY_FAILED')
-        );
-      },
-    });
-
-    // Load period stats
-    this.periodService.getPeriodStats().subscribe({
-      next: (stats) => {
-        this.periodStats.set(stats);
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        console.error('Error loading period stats:', err);
-        this.error.set(
-          this.translate.instant('PERIOD.ERRORS.LOAD_STATS_FAILED')
         );
         this.isLoading.set(false);
       },
@@ -453,6 +536,8 @@ export class PeriodTrackingComponent implements OnInit {
     return history.length;
   }
 
+
+
   savePeriodData(): void {
     // Validate form before submission
     const validation = validatePeriodForm(this.logForm);
@@ -476,18 +561,21 @@ export class PeriodTrackingComponent implements OnInit {
     // Use the period service to save data
     this.periodService.logPeriodData(sanitizedForm).subscribe({
       next: (response) => {
-        console.log('Period logged successfully:', response);
         this.isLoading.set(false);
         this.formState.update((state) => ({ ...state, isSubmitting: false }));
         this.showLogForm.set(false);
         this.resetForm();
-        this.loadPeriodData(); // Reload data to show updated information
 
-        const successMsg = this.translate.instant('PERIOD.SUCCESS.LOGGED');
-        alert(successMsg);
+        // Reload data first
+        this.loadPeriodData();
+
+        // Calculate and show predictions
+        this.calculatePredictions(sanitizedForm);
+
+        // Show success modal with predictions
+        this.showSuccessModal.set(true);
       },
       error: (error) => {
-        console.error('Error saving period data:', error);
         this.isLoading.set(false);
         this.formState.update((state) => ({ ...state, isSubmitting: false }));
 

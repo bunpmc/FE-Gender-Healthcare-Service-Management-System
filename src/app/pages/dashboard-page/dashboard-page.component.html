@@ -4,20 +4,19 @@
     <!-- Loading State -->
     <div *ngIf="isLoading" class="loading-container">
       <div class="loading-spinner"></div>
-      <p class="loading-text">Loading dashboard data...</p>
+      <p class="loading-text">{{ "DASHBOARD.LOADING_TEXT" | translate }}</p>
     </div>
 
     <!-- Error State -->
     <div *ngIf="errorMessage && !isLoading" class="error-container">
-      <div class="error-icon">⚠️</div>
       <p class="error-message">{{ errorMessage }}</p>
       <div class="error-actions">
         <button class="retry-btn" (click)="refreshDashboard()">
-          Try Again
+          {{ "DASHBOARD.TRY_AGAIN" | translate }}
         </button>
-        <button class="debug-btn" (click)="debugToken()">Debug Token</button>
+        <button class="debug-btn" (click)="debugToken()">{{ "DASHBOARD.DEBUG_TOKEN" | translate }}</button>
         <button class="refresh-token-btn" (click)="forceRefreshToken()">
-          Refresh Token
+          {{ "DASHBOARD.REFRESH_TOKEN" | translate }}
         </button>
       </div>
     </div>
@@ -45,7 +44,7 @@
               (click)="fileInput.click()"
               [disabled]="isProfileSaving"
             >
-              📷 Change Photo
+              Change Photo
             </button>
           </div>
         </div>
@@ -75,17 +74,16 @@
             "
           >
             <div *ngIf="isLoadingEdgeProfile" class="loading-indicator">
-              <span class="loading-spinner">⏳</span> Loading profile from
-              server...
+              Loading profile from server...
             </div>
             <div *ngIf="edgeProfileError" class="edge-error">
-              <span class="error-icon">⚠️</span> {{ edgeProfileError }}
+              {{ edgeProfileError }}
             </div>
             <div
               *ngIf="edgeFunctionProfile && !isLoadingEdgeProfile"
               class="edge-success"
             >
-              <span class="success-icon">✅</span> Profile loaded from server
+              Profile loaded from server
               <div class="edge-profile-info">
                 <p>
                   <strong>Appointments:</strong>
@@ -210,51 +208,47 @@
         <!-- Dashboard Statistics Section -->
         <div class="dashboard-stats-section" *ngIf="edgeFunctionProfile">
           <div class="stats-header">
-            <h2 class="stats-title">Dashboard Overview</h2>
+            <h2 class="stats-title">{{ "DASHBOARD.OVERVIEW" | translate }}</h2>
             <button
               class="refresh-btn"
               (click)="loadEdgeFunctionProfile()"
               [disabled]="isLoadingEdgeProfile"
             >
-              <span *ngIf="!isLoadingEdgeProfile">🔄 Refresh</span>
-              <span *ngIf="isLoadingEdgeProfile">⏳ Loading...</span>
+              <span *ngIf="!isLoadingEdgeProfile">{{ "DASHBOARD.REFRESH" | translate }}</span>
+              <span *ngIf="isLoadingEdgeProfile">{{ "DASHBOARD.LOADING" | translate }}</span>
             </button>
           </div>
           <div class="stats-grid">
             <div class="stat-card">
-              <div class="stat-icon">👤</div>
               <div class="stat-content">
                 <div class="stat-number">
                   {{ dashboardStatistics.totalPatients || 1 }}
                 </div>
-                <div class="stat-label">Profile</div>
+                <div class="stat-label">{{ "DASHBOARD.PROFILE" | translate }}</div>
               </div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon">📅</div>
               <div class="stat-content">
                 <div class="stat-number">
                   {{ dashboardStatistics.totalAppointments || 0 }}
                 </div>
-                <div class="stat-label">Total Appointments</div>
+                <div class="stat-label">{{ "DASHBOARD.APPOINTMENTS" | translate }}</div>
               </div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon">⏳</div>
               <div class="stat-content">
                 <div class="stat-number">
                   {{ dashboardStatistics.pendingAppointments || 0 }}
                 </div>
-                <div class="stat-label">Pending</div>
+                <div class="stat-label">{{ "DASHBOARD.PENDING" | translate }}</div>
               </div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon">✅</div>
               <div class="stat-content">
                 <div class="stat-number">
                   {{ dashboardStatistics.confirmedAppointments || 0 }}
                 </div>
-                <div class="stat-label">Confirmed</div>
+                <div class="stat-label">{{ "DASHBOARD.CONFIRMED" | translate }}</div>
               </div>
             </div>
           </div>
@@ -305,19 +299,19 @@
                   class="appointment-date"
                   *ngIf="appointment.appointment_date"
                 >
-                  📅 {{ appointment.appointment_date | date : "mediumDate" }}
+                  Date: {{ appointment.appointment_date | date : "mediumDate" }}
                 </p>
                 <p
                   class="appointment-time"
                   *ngIf="appointment.appointment_time"
                 >
-                  🕐 {{ appointment.appointment_time }}
+                  Time: {{ appointment.appointment_time }}
                 </p>
                 <p class="appointment-schedule">
-                  📋 {{ appointment.schedule }}
+                  Schedule: {{ appointment.schedule }}
                 </p>
                 <p class="appointment-message" *ngIf="appointment.message">
-                  💬 {{ appointment.message }}
+                  Message: {{ appointment.message }}
                 </p>
               </div>
             </div>
