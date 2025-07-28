@@ -25,6 +25,15 @@ export interface ChatResponse {
   session_id?: string;
 }
 
+export interface N8nWebhookResponseItem {
+  output?: string;
+  answer?: string;
+}
+
+export type N8nWebhookResponse =
+  | N8nWebhookResponseItem
+  | N8nWebhookResponseItem[];
+
 export interface ChatRequest {
   query: string;
   user_id?: string;

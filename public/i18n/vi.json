@@ -175,13 +175,26 @@
     "CONNECTION_LOST": "Mất kết nối. Đang cố gắng kết nối lại...",
     "QUICK_REPLIES_TITLE": "Câu hỏi gợi ý",
     "QUICK_REPLIES": [
-      "Tôi có thể giúp gì cho bạn?",
       "Tìm bác sĩ phụ khoa cho tôi",
       "Tôi cần bác sĩ nội tiết",
-      "Hiện danh sách bác sĩ",
-      "Tôi cần hỗ trợ kỹ thuật"
+      "Các dịch vụ chăm sóc giới tính nào có sẵn?",
+      "Làm thế nào để bắt đầu liệu pháp hormone?",
+      "Tôi cần hỗ trợ sức khỏe tâm thần cho rối loạn giới tính",
+      "Yêu cầu cho phẫu thuật xác nhận giới tính là gì?",
+      "Tôi có kinh nguyệt không đều, phải làm gì?",
+      "Làm thế nào để giảm đau bụng kinh?",
+      "Khi nào tôi nên lo lắng về chu kỳ kinh nguyệt?",
+      "Hiện danh sách bác sĩ"
     ],
     "TYPING": "AI đang suy nghĩ...",
+    "THINKING": {
+      "DEFAULT": "AI đang suy nghĩ... 🤔",
+      "PROCESSING": "Đang xử lý yêu cầu của bạn... ⚡",
+      "ALMOST_DONE": "Sắp xong rồi! Chờ chút nhé... ⏳",
+      "OOPS_LONGER": "Ôi... mất thời gian hơn tôi nghĩ! 😅",
+      "BEAR_WITH_ME": "Kiên nhẫn chút nhé, tôi đang làm việc... 🐻",
+      "WORKING_HARD": "Đang cố gắng hết sức để đưa ra câu trả lời tốt nhất! 💪"
+    },
     "WELCOME": "Xin chào! Tôi là trợ lý sức khỏe của bạn. Tôi có thể giúp gì cho bạn hôm nay? 😊",
     "INPUT_HINT": "Nhấn Enter để gửi • Shift + Enter để xuống dòng",
     "CHAT_ERROR": {

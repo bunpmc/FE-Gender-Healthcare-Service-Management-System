@@ -2,12 +2,15 @@
 
 export interface PeriodEntry {
   period_id: string;
-  user_id: string;
+  patient_id: string;
   start_date: string;
-  end_date?: string;
-  symptoms?: PeriodSymptom[];
-  flow_intensity: FlowIntensity;
-  period_description?: string;
+  cycle_length?: number | null;
+  period_length?: number | null;
+  estimated_next_date?: string | null;
+  flow_intensity?: FlowIntensity | null;
+  symptoms?: PeriodSymptom[] | null;
+  period_description?: string | null;
+  predictions?: any | null;
   created_at: string;
   updated_at?: string;
 }
@@ -22,13 +25,54 @@ export interface PeriodStats {
   ovulationDate: string;
   averagePeriodLength: number;
   totalCyclesTracked: number;
+  // Enhanced fertility analysis
+  fertilityAnalysis?: FertilityAnalysis;
+  conceptionTiming?: ConceptionTiming;
+  periodStatus?: PeriodStatus;
+}
+
+export interface FertilityAnalysis {
+  isPeakFertility: boolean;
+  fertilityScore: number; // 0-100
+  bestConceptionDays: string[];
+  currentPhase: 'menstrual' | 'follicular' | 'ovulatory' | 'luteal';
+  phaseDescription: string;
+  daysToOvulation: number;
+  daysSinceOvulation: number;
+}
+
+export interface ConceptionTiming {
+  optimalWindow: {
+    start: string;
+    end: string;
+    daysFromToday: number;
+  };
+  chanceOfConception: 'very_high' | 'high' | 'moderate' | 'low' | 'very_low';
+  recommendedActions: string[];
+  nextOptimalWindow: {
+    start: string;
+    end: string;
+    cycleDay: number;
+  };
+}
+
+export interface PeriodStatus {
+  isLate: boolean;
+  daysLate: number;
+  expectedDate: string;
+  actualDate?: string;
+  status: 'on_time' | 'early' | 'late' | 'very_late' | 'missed';
+  possibleReasons: string[];
+  shouldTestPregnancy: boolean;
 }
 
 export interface PeriodTrackingRequest {
+  patient_id: string;
   start_date: string;
-  end_date?: string | null;
-  symptoms?: PeriodSymptom[];
+  cycle_length?: number | null;
+  period_length?: number | null;
   flow_intensity: FlowIntensity;
+  symptoms?: PeriodSymptom[] | null;
   period_description?: string | null;
 }
 
@@ -43,7 +87,8 @@ export interface PeriodFormValidation {
   isValid: boolean;
   errors: {
     start_date?: string;
-    end_date?: string;
+    cycle_length?: string;
+    period_length?: string;
     flow_intensity?: string;
     symptoms?: string;
     period_description?: string;
@@ -67,6 +112,14 @@ export interface CalendarDay {
   isPredictedPeriod: boolean;
   dayNumber: number;
   status: 'period' | 'fertile' | 'ovulation' | 'predicted' | 'normal';
+  // Enhanced fertility indicators
+  fertilityLevel?: 'none' | 'low' | 'moderate' | 'high' | 'peak';
+  cyclePhase?: 'menstrual' | 'follicular' | 'ovulatory' | 'luteal';
+  conceptionChance?: number; // 0-100
+  isOptimalConception?: boolean;
+  isPeakFertility?: boolean;
+  isLatePeriod?: boolean;
+  daysLate?: number;
 }
 
 // ========== TYPES ==========
@@ -81,12 +134,7 @@ export type PeriodSymptom =
   | 'nausea'
   | 'back_pain'
   | 'acne'
-  | 'food_cravings'
-  | 'insomnia'
-  | 'diarrhea'
-  | 'constipation'
-  | 'hot_flashes'
-  | 'dizziness';
+  | 'food_cravings';
 
 export type FlowIntensity = 'light' | 'medium' | 'heavy' | 'very_heavy';
 
@@ -103,11 +151,6 @@ export const PERIOD_SYMPTOMS: PeriodSymptom[] = [
   'back_pain',
   'acne',
   'food_cravings',
-  'insomnia',
-  'diarrhea',
-  'constipation',
-  'hot_flashes',
-  'dizziness',
 ];
 
 export const FLOW_INTENSITIES: {
@@ -167,6 +210,250 @@ export function calculateOvulationDate(lastPeriodStart: string): string {
   return ovulationDate.toISOString().split('T')[0];
 }
 
+// ========== ENHANCED FERTILITY ANALYSIS FUNCTIONS ==========
+
+export function calculateFertilityAnalysis(
+  lastPeriodStart: string,
+  averageCycleLength: number = 28
+): FertilityAnalysis {
+  const startDate = new Date(lastPeriodStart);
+  const today = new Date();
+  const currentCycleDay =
+    Math.ceil((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) +
+    1;
+
+  // Calculate ovulation day (typically 14 days before next period)
+  const ovulationDay = averageCycleLength - 14;
+  const daysToOvulation = ovulationDay - currentCycleDay;
+  const daysSinceOvulation = currentCycleDay - ovulationDay;
+
+  // Determine cycle phase
+  let currentPhase: 'menstrual' | 'follicular' | 'ovulatory' | 'luteal';
+  let phaseDescription: string;
+
+  if (currentCycleDay <= 5) {
+    currentPhase = 'menstrual';
+    phaseDescription = 'Menstrual phase - period is occurring';
+  } else if (currentCycleDay <= ovulationDay - 2) {
+    currentPhase = 'follicular';
+    phaseDescription = 'Follicular phase - preparing for ovulation';
+  } else if (
+    currentCycleDay >= ovulationDay - 1 &&
+    currentCycleDay <= ovulationDay + 1
+  ) {
+    currentPhase = 'ovulatory';
+    phaseDescription = 'Ovulatory phase - peak fertility window';
+  } else {
+    currentPhase = 'luteal';
+    phaseDescription = 'Luteal phase - post-ovulation';
+  }
+
+  // Calculate fertility score (0-100)
+  let fertilityScore = 0;
+  const isPeakFertility = Math.abs(daysToOvulation) <= 1;
+
+  if (
+    currentCycleDay >= ovulationDay - 5 &&
+    currentCycleDay <= ovulationDay + 1
+  ) {
+    // Fertile window: 5 days before ovulation + ovulation day
+    const distanceFromOvulation = Math.abs(currentCycleDay - ovulationDay);
+    fertilityScore = Math.max(0, 100 - distanceFromOvulation * 20);
+  }
+
+  // Best conception days (5 days before ovulation + ovulation day)
+  const bestConceptionDays: string[] = [];
+  for (let i = -5; i <= 1; i++) {
+    const conceptionDate = new Date(startDate);
+    conceptionDate.setDate(startDate.getDate() + ovulationDay - 1 + i);
+    bestConceptionDays.push(conceptionDate.toISOString().split('T')[0]);
+  }
+
+  return {
+    isPeakFertility,
+    fertilityScore,
+    bestConceptionDays,
+    currentPhase,
+    phaseDescription,
+    daysToOvulation,
+    daysSinceOvulation,
+  };
+}
+
+export function calculateConceptionTiming(
+  lastPeriodStart: string,
+  averageCycleLength: number = 28
+): ConceptionTiming {
+  const startDate = new Date(lastPeriodStart);
+  const today = new Date();
+  const currentCycleDay =
+    Math.ceil((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) +
+    1;
+
+  // Calculate ovulation day
+  const ovulationDay = averageCycleLength - 14;
+
+  // Current optimal window (5 days before ovulation + ovulation day)
+  const optimalStart = new Date(startDate);
+  optimalStart.setDate(startDate.getDate() + ovulationDay - 6);
+  const optimalEnd = new Date(startDate);
+  optimalEnd.setDate(startDate.getDate() + ovulationDay);
+
+  const daysFromToday = Math.ceil(
+    (optimalStart.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+  );
+
+  // Determine conception chance
+  let chanceOfConception:
+    | 'very_high'
+    | 'high'
+    | 'moderate'
+    | 'low'
+    | 'very_low';
+  const daysToOvulation = ovulationDay - currentCycleDay;
+
+  if (Math.abs(daysToOvulation) <= 1) {
+    chanceOfConception = 'very_high';
+  } else if (Math.abs(daysToOvulation) <= 2) {
+    chanceOfConception = 'high';
+  } else if (Math.abs(daysToOvulation) <= 3) {
+    chanceOfConception = 'moderate';
+  } else if (Math.abs(daysToOvulation) <= 5) {
+    chanceOfConception = 'low';
+  } else {
+    chanceOfConception = 'very_low';
+  }
+
+  // Recommended actions based on current phase
+  const recommendedActions: string[] = [];
+  if (daysToOvulation > 5) {
+    recommendedActions.push(
+      'Track ovulation signs (cervical mucus, temperature)'
+    );
+    recommendedActions.push('Maintain healthy lifestyle');
+  } else if (daysToOvulation > 0) {
+    recommendedActions.push('Increase intimacy frequency');
+    recommendedActions.push('Monitor ovulation symptoms');
+    recommendedActions.push('Consider ovulation predictor kits');
+  } else if (daysToOvulation >= -1) {
+    recommendedActions.push(
+      'Peak fertility window - optimal time for conception'
+    );
+    recommendedActions.push('Daily intimacy recommended');
+  } else {
+    recommendedActions.push('Post-ovulation - wait for next cycle');
+    recommendedActions.push('Continue healthy habits');
+  }
+
+  // Next optimal window (next cycle)
+  const nextCycleStart = new Date(startDate);
+  nextCycleStart.setDate(startDate.getDate() + averageCycleLength);
+  const nextOptimalStart = new Date(nextCycleStart);
+  nextOptimalStart.setDate(nextCycleStart.getDate() + ovulationDay - 6);
+  const nextOptimalEnd = new Date(nextCycleStart);
+  nextOptimalEnd.setDate(nextCycleStart.getDate() + ovulationDay);
+
+  return {
+    optimalWindow: {
+      start: optimalStart.toISOString().split('T')[0],
+      end: optimalEnd.toISOString().split('T')[0],
+      daysFromToday,
+    },
+    chanceOfConception,
+    recommendedActions,
+    nextOptimalWindow: {
+      start: nextOptimalStart.toISOString().split('T')[0],
+      end: nextOptimalEnd.toISOString().split('T')[0],
+      cycleDay: ovulationDay - 5,
+    },
+  };
+}
+
+export function calculatePeriodStatus(
+  periodHistory: PeriodEntry[],
+  averageCycleLength: number = 28
+): PeriodStatus {
+  if (periodHistory.length === 0) {
+    return {
+      isLate: false,
+      daysLate: 0,
+      expectedDate: '',
+      status: 'on_time',
+      possibleReasons: [],
+      shouldTestPregnancy: false,
+    };
+  }
+
+  const lastPeriod = periodHistory[0];
+  const lastPeriodStart = new Date(lastPeriod.start_date);
+  const today = new Date();
+
+  // Calculate expected next period date
+  const expectedDate = new Date(lastPeriodStart);
+  expectedDate.setDate(lastPeriodStart.getDate() + averageCycleLength);
+
+  // Calculate days late/early
+  const daysDifference = Math.ceil(
+    (today.getTime() - expectedDate.getTime()) / (1000 * 60 * 60 * 24)
+  );
+
+  let status: 'on_time' | 'early' | 'late' | 'very_late' | 'missed';
+  let isLate = false;
+  let daysLate = 0;
+  let possibleReasons: string[] = [];
+  let shouldTestPregnancy = false;
+
+  if (daysDifference < -3) {
+    status = 'early';
+  } else if (daysDifference >= -3 && daysDifference <= 3) {
+    status = 'on_time';
+  } else if (daysDifference > 3 && daysDifference <= 7) {
+    status = 'late';
+    isLate = true;
+    daysLate = daysDifference;
+    possibleReasons = [
+      'Stress or lifestyle changes',
+      'Hormonal fluctuations',
+      'Changes in weight or exercise',
+      'Illness or medication',
+    ];
+  } else if (daysDifference > 7 && daysDifference <= 14) {
+    status = 'very_late';
+    isLate = true;
+    daysLate = daysDifference;
+    shouldTestPregnancy = true;
+    possibleReasons = [
+      'Possible pregnancy',
+      'Hormonal imbalance',
+      'Significant stress',
+      'Medical conditions (PCOS, thyroid)',
+      'Medication side effects',
+    ];
+  } else if (daysDifference > 14) {
+    status = 'missed';
+    isLate = true;
+    daysLate = daysDifference;
+    shouldTestPregnancy = true;
+    possibleReasons = [
+      'Pregnancy (most likely)',
+      'Hormonal disorders',
+      'Menopause (if age appropriate)',
+      'Severe stress or trauma',
+      'Eating disorders',
+      'Medical conditions requiring evaluation',
+    ];
+  }
+
+  return {
+    isLate,
+    daysLate,
+    expectedDate: expectedDate.toISOString().split('T')[0],
+    status: status!,
+    possibleReasons,
+    shouldTestPregnancy,
+  };
+}
+
 export function isDateInRange(
   date: string,
   startDate: string,
@@ -180,13 +467,13 @@ export function isDateInRange(
 
 export function formatDateForDisplay(
   dateString: string,
-  locale: string = 'vi-VN'
+  locale: string = 'en-GB'
 ): string {
   try {
     const date = new Date(dateString);
     return date.toLocaleDateString(locale, {
       day: '2-digit',
-      month: '2-digit',
+      month: 'short',
       year: 'numeric',
     });
   } catch {
@@ -206,11 +493,6 @@ export function getSymptomDisplayName(symptom: PeriodSymptom): string {
     back_pain: 'Back Pain',
     acne: 'Acne',
     food_cravings: 'Food Cravings',
-    insomnia: 'Insomnia',
-    diarrhea: 'Diarrhea',
-    constipation: 'Constipation',
-    hot_flashes: 'Hot Flashes',
-    dizziness: 'Dizziness',
   };
 
   return symptomNames[symptom] || symptom;
@@ -253,30 +535,19 @@ export function validatePeriodForm(
     }
   }
 
-  // Validate end date if provided
-  if (form.end_date && form.end_date.trim() !== '') {
-    const endDate = new Date(form.end_date);
-    const startDate = new Date(form.start_date);
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
+  // Validate cycle length if provided
+  if (form.cycle_length !== null && form.cycle_length !== undefined) {
+    if (form.cycle_length < 21 || form.cycle_length > 35) {
+      errors.cycle_length = 'Cycle length must be between 21 and 35 days';
+      isValid = false;
+    }
+  }
 
-    if (isNaN(endDate.getTime())) {
-      errors.end_date = 'Invalid end date format';
+  // Validate period length if provided
+  if (form.period_length !== null && form.period_length !== undefined) {
+    if (form.period_length < 1 || form.period_length > 10) {
+      errors.period_length = 'Period length must be between 1 and 10 days';
       isValid = false;
-    } else if (endDate > today) {
-      errors.end_date = 'End date cannot be in the future';
-      isValid = false;
-    } else if (form.start_date && endDate < startDate) {
-      errors.end_date = 'End date must be after start date';
-      isValid = false;
-    } else {
-      // Check if period duration is reasonable (max 10 days)
-      const diffTime = endDate.getTime() - startDate.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      if (diffDays > 10) {
-        errors.end_date = 'Period duration cannot exceed 10 days';
-        isValid = false;
-      }
     }
   }
 
@@ -309,12 +580,16 @@ export function validatePeriodForm(
   return { isValid, errors };
 }
 
-export function createEmptyPeriodForm(): PeriodTrackingRequest {
+export function createEmptyPeriodForm(
+  patientId: string = ''
+): PeriodTrackingRequest {
   return {
+    patient_id: patientId,
     start_date: '',
-    end_date: null,
-    symptoms: [],
+    cycle_length: 28,
+    period_length: 5,
     flow_intensity: 'medium',
+    symptoms: [],
     period_description: null,
   };
 }
@@ -325,7 +600,8 @@ export function isFormDirty(
 ): boolean {
   return (
     form.start_date !== originalForm.start_date ||
-    form.end_date !== originalForm.end_date ||
+    form.cycle_length !== originalForm.cycle_length ||
+    form.period_length !== originalForm.period_length ||
     form.flow_intensity !== originalForm.flow_intensity ||
     form.period_description !== originalForm.period_description ||
     JSON.stringify(form.symptoms?.sort()) !==
@@ -337,15 +613,17 @@ export function sanitizePeriodForm(
   form: PeriodTrackingRequest
 ): PeriodTrackingRequest {
   return {
+    patient_id: form.patient_id || '',
     start_date: form.start_date?.trim() || '',
-    end_date: form.end_date?.trim() || null,
+    cycle_length: form.cycle_length || null,
+    period_length: form.period_length || null,
     symptoms:
       form.symptoms?.filter((symptom) => PERIOD_SYMPTOMS.includes(symptom)) ||
       [],
-    flow_intensity: ['light', 'medium', 'heavy', 'very_heavy'].includes(
-      form.flow_intensity
+    flow_intensity: (['light', 'medium', 'heavy'] as const).includes(
+      form.flow_intensity as any
     )
-      ? form.flow_intensity
+      ? (form.flow_intensity as FlowIntensity)
       : 'medium',
     period_description:
       form.period_description?.trim().substring(0, 500) || null,

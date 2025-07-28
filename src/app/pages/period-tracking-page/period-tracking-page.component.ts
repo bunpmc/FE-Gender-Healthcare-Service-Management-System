@@ -23,6 +23,7 @@ import {
 } from '../../models/period-tracking.model';
 import { HeaderComponent } from '../../components/header/header.component';
 import { FooterComponent } from '../../components/footer/footer.component';
+import { PeriodCalendarComponent } from '../../components/period-calendar/period-calendar.component';
 
 // ================== COMPONENT DECORATOR ==================
 @Component({
@@ -34,13 +35,14 @@ import { FooterComponent } from '../../components/footer/footer.component';
     TranslateModule,
     HeaderComponent,
     FooterComponent,
+    PeriodCalendarComponent,
   ],
   templateUrl: './period-tracking-page.component.html',
   styleUrl: './period-tracking-page.component.css',
 })
 export class PeriodTrackingComponent implements OnInit {
   // =========== DEPENDENCY INJECTION ===========
-  private periodService = inject(PeriodTrackingService);
+  private periodService: PeriodTrackingService = inject(PeriodTrackingService);
   private translate = inject(TranslateService);
 
   // =========== STATE SIGNALS ===========
@@ -50,8 +52,14 @@ export class PeriodTrackingComponent implements OnInit {
   showLogForm = signal(false);
   showStatsModal = signal(false);
   showCalendar = signal(false);
+  showMiniCalendar = signal(false);
   showSuccessModal = signal(false);
   successPredictions = signal<any>(null);
+
+  // =========== TAB STATE ===========
+  activeTab = signal<'overview' | 'calendar' | 'insights' | 'history'>(
+    'overview'
+  );
 
   // =========== DATA SIGNALS ===========
   periodHistory = signal<PeriodEntry[]>([]);
@@ -95,15 +103,11 @@ export class PeriodTrackingComponent implements OnInit {
     return this.getTodayDateString();
   }
 
-  // Validate date range
-  validateDateRange(): boolean {
-    if (!this.logForm.start_date) return false;
-    if (!this.logForm.end_date) return true; // End date is optional
+  // Validate cycle length
+  validateCycleLength(): boolean {
+    if (!this.logForm.cycle_length) return true; // Cycle length is optional
 
-    const startDate = new Date(this.logForm.start_date);
-    const endDate = new Date(this.logForm.end_date);
-
-    return endDate >= startDate;
+    return this.logForm.cycle_length >= 21 && this.logForm.cycle_length <= 35;
   }
 
   // Calculate predictions after logging period
@@ -123,7 +127,9 @@ export class PeriodTrackingComponent implements OnInit {
       if (newPeriod.end_date) {
         const start = new Date(newPeriod.start_date);
         const end = new Date(newPeriod.end_date);
-        periodLength = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        periodLength =
+          Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) +
+          1;
       }
     }
 
@@ -144,20 +150,24 @@ export class PeriodTrackingComponent implements OnInit {
 
     // Calculate days until next period
     const today = new Date();
-    const daysUntil = Math.ceil((nextPeriodDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const daysUntil = Math.ceil(
+      (nextPeriodDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
 
     const predictions = {
-      nextPeriodDate: this.formatDate(nextPeriodDate.toISOString().split('T')[0]),
+      nextPeriodDate: this.formatDate(
+        nextPeriodDate.toISOString().split('T')[0]
+      ),
       daysUntilNextPeriod: Math.max(0, daysUntil),
       averageCycleLength: averageCycle,
       periodLength: periodLength,
       ovulationDate: this.formatDate(ovulationDate.toISOString().split('T')[0]),
       fertileWindow: {
         start: this.formatDate(fertileStart.toISOString().split('T')[0]),
-        end: this.formatDate(fertileEnd.toISOString().split('T')[0])
+        end: this.formatDate(fertileEnd.toISOString().split('T')[0]),
       },
       totalCyclesTracked: history.length + 1,
-      isFirstPeriod: history.length === 0
+      isFirstPeriod: history.length === 0,
     };
 
     this.successPredictions.set(predictions);
@@ -219,7 +229,7 @@ export class PeriodTrackingComponent implements OnInit {
     for (let i = 0; i < 42; i++) {
       const day: CalendarDay = {
         date: new Date(currentDate),
-        dateString: currentDate.toISOString().split('T')[0],
+        dateString: this.formatDateString(currentDate),
         isCurrentMonth: currentDate.getMonth() === month,
         isToday: this.isDateToday(currentDate),
         isPeriodDay: this.isPeriodDay(currentDate),
@@ -243,18 +253,48 @@ export class PeriodTrackingComponent implements OnInit {
     return date.toDateString() === today.toDateString();
   }
 
+  private formatDateString(date: Date): string {
+    // Format date as YYYY-MM-DD without timezone issues
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   private isPeriodDay(date: Date): boolean {
     const history = this.periodHistory();
     return history.some((entry) => {
-      const startDate = new Date(entry.start_date);
-      const endDate = entry.end_date ? new Date(entry.end_date) : startDate;
+      const startDate = new Date(entry.start_date + 'T00:00:00');
+
+      // If no cycle_length, it's an ongoing period - check if date is >= start date and <= today
+      if (!entry.cycle_length) {
+        const today = new Date();
+        today.setHours(23, 59, 59, 999); // End of today
+        return date >= startDate && date <= today;
+      }
+
+      // If has cycle_length, calculate period duration using period_length or default 5 days
+      const periodDuration = entry.period_length || 5; // Use actual period length or default
+      const endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + periodDuration - 1);
       return date >= startDate && date <= endDate;
     });
   }
 
   private isFertileDay(date: Date): boolean {
     const stats = this.periodStats();
-    if (!stats) return false;
+    if (!stats) {
+      // Fallback: Simple fertile window calculation (days 10-17 of cycle)
+      const history = this.periodHistory();
+      return history.some((entry) => {
+        const startDate = new Date(entry.start_date);
+        const fertileStart = new Date(startDate);
+        fertileStart.setDate(startDate.getDate() + 9); // Day 10
+        const fertileEnd = new Date(startDate);
+        fertileEnd.setDate(startDate.getDate() + 16); // Day 17
+        return date >= fertileStart && date <= fertileEnd;
+      });
+    }
 
     const fertileStart = new Date(stats.fertileWindowStart);
     const fertileEnd = new Date(stats.fertileWindowEnd);
@@ -263,7 +303,16 @@ export class PeriodTrackingComponent implements OnInit {
 
   private isOvulationDay(date: Date): boolean {
     const stats = this.periodStats();
-    if (!stats) return false;
+    if (!stats) {
+      // Fallback: Ovulation typically occurs around day 14
+      const history = this.periodHistory();
+      return history.some((entry) => {
+        const startDate = new Date(entry.start_date);
+        const ovulationDate = new Date(startDate);
+        ovulationDate.setDate(startDate.getDate() + 13); // Day 14
+        return date.toDateString() === ovulationDate.toDateString();
+      });
+    }
 
     const ovulationDate = new Date(stats.ovulationDate);
     return date.toDateString() === ovulationDate.toDateString();
@@ -271,13 +320,32 @@ export class PeriodTrackingComponent implements OnInit {
 
   private isPredictedPeriod(date: Date): boolean {
     const stats = this.periodStats();
-    if (!stats) return false;
+    const history = this.periodHistory();
 
-    const nextPeriod = new Date(stats.nextPeriodDate);
-    const predictedEnd = new Date(nextPeriod);
-    predictedEnd.setDate(predictedEnd.getDate() + 5);
+    if (history.length === 0) return false;
 
-    return date >= nextPeriod && date <= predictedEnd;
+    if (stats) {
+      // Use period stats for more accurate prediction
+      const nextPeriod = new Date(stats.nextPeriodDate);
+      const predictedEnd = new Date(nextPeriod);
+      predictedEnd.setDate(
+        predictedEnd.getDate() + (stats.averagePeriodLength - 1)
+      );
+
+      return date >= nextPeriod && date <= predictedEnd;
+    }
+
+    // Fallback: Simple prediction based on last period + 28 days
+    const lastPeriod = history[0];
+    const lastStart = new Date(lastPeriod.start_date);
+    const predictedStart = new Date(lastStart);
+    predictedStart.setDate(lastStart.getDate() + 28);
+
+    // Predicted period duration (5 days)
+    const predictedEnd = new Date(predictedStart);
+    predictedEnd.setDate(predictedStart.getDate() + 4);
+
+    return date >= predictedStart && date <= predictedEnd;
   }
 
   private getDayStatus(
@@ -313,6 +381,10 @@ export class PeriodTrackingComponent implements OnInit {
     } else {
       this.resetForm();
     }
+  }
+
+  toggleMiniCalendar(): void {
+    this.showMiniCalendar.set(!this.showMiniCalendar());
   }
 
   // =========== FORM HANDLING ===========
@@ -359,6 +431,11 @@ export class PeriodTrackingComponent implements OnInit {
       isDirty: false,
       validation: { isValid: true, errors: {} },
     });
+  }
+
+  // =========== TAB METHODS ===========
+  switchTab(tab: 'overview' | 'calendar' | 'insights' | 'history'): void {
+    this.activeTab.set(tab);
   }
 
   // =========== FORM SUBMISSION ===========
@@ -412,7 +489,7 @@ export class PeriodTrackingComponent implements OnInit {
     if (!dateString) return false;
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    return dateString === yesterday.toISOString().split('T')[0];
+    return dateString === this.formatDateString(yesterday);
   }
 
   getFlowIntensityLabel(intensity: string): string {
@@ -426,7 +503,7 @@ export class PeriodTrackingComponent implements OnInit {
   // =========== CALENDAR METHODS ===========
   getMonthYearDisplay(): string {
     const current = this.currentMonth();
-    return current.toLocaleDateString('vi-VN', {
+    return current.toLocaleDateString('en-GB', {
       month: 'long',
       year: 'numeric',
     });
@@ -436,6 +513,82 @@ export class PeriodTrackingComponent implements OnInit {
     if (day.isCurrentMonth) {
       this.quickLogForDate(day.dateString);
     }
+  }
+
+  onMonthChanged(newMonth: Date): void {
+    this.currentMonth.set(newMonth);
+    this.generateCalendar();
+  }
+
+  // =========== INSIGHTS METHODS ===========
+  getMinCycleLength(): number {
+    const history = this.periodHistory();
+    if (history.length < 2) return 28;
+
+    const cycleLengths = this.calculateCycleLengths(history);
+    return cycleLengths.length > 0 ? Math.min(...cycleLengths) : 28;
+  }
+
+  getMaxCycleLength(): number {
+    const history = this.periodHistory();
+    if (history.length < 2) return 28;
+
+    const cycleLengths = this.calculateCycleLengths(history);
+    return cycleLengths.length > 0 ? Math.max(...cycleLengths) : 28;
+  }
+
+  getTopSymptoms(): Array<{ name: string; frequency: number }> {
+    const history = this.periodHistory();
+    const symptomCounts: { [key: string]: number } = {};
+
+    history.forEach((period) => {
+      if (period.symptoms) {
+        period.symptoms.forEach((symptom) => {
+          symptomCounts[symptom] = (symptomCounts[symptom] || 0) + 1;
+        });
+      }
+    });
+
+    const totalPeriods = history.length;
+    return Object.entries(symptomCounts)
+      .map(([name, count]) => ({
+        name: getSymptomDisplayName(name as PeriodSymptom),
+        frequency: Math.round((count / totalPeriods) * 100),
+      }))
+      .sort((a, b) => b.frequency - a.frequency)
+      .slice(0, 3);
+  }
+
+  getPeriodDuration(period: PeriodEntry): number {
+    if (!period.cycle_length) {
+      // For ongoing periods, calculate days since start
+      const start = new Date(period.start_date);
+      const today = new Date();
+      const diffTime = today.getTime() - start.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return Math.max(1, diffDays);
+    }
+
+    // For completed periods, use actual period_length or default 5 days
+    return period.period_length || 5;
+  }
+
+  private calculateCycleLengths(history: PeriodEntry[]): number[] {
+    const cycleLengths: number[] = [];
+
+    for (let i = 1; i < history.length; i++) {
+      const current = new Date(history[i].start_date);
+      const previous = new Date(history[i - 1].start_date);
+      const diffTime = current.getTime() - previous.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays > 0 && diffDays < 60) {
+        // Reasonable cycle length
+        cycleLengths.push(diffDays);
+      }
+    }
+
+    return cycleLengths;
   }
 
   getCalendarDayClasses(day: CalendarDay): string {
@@ -472,17 +625,100 @@ export class PeriodTrackingComponent implements OnInit {
     this.showLogForm.set(true);
   }
 
+  /**
+   * Get ongoing period information for display
+   */
+  getOngoingPeriodInfo(): {
+    isOngoing: boolean;
+    dayCount: number;
+    startDate: string;
+  } | null {
+    try {
+      const ongoingPeriod = this.periodService.getCurrentOngoingPeriod();
+      if (!ongoingPeriod) {
+        return null;
+      }
+
+      const dayCount = this.periodService.getDaysSincePeriodStarted();
+      return {
+        isOngoing: true,
+        dayCount,
+        startDate: ongoingPeriod.start_date,
+      };
+    } catch (error) {
+      console.error('Error getting ongoing period info:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Edit the current ongoing period
+   */
+  editCurrentPeriod(): void {
+    const ongoingPeriod = this.periodService.getCurrentOngoingPeriod();
+    if (!ongoingPeriod) {
+      this.error.set('No ongoing period found to edit.');
+      return;
+    }
+
+    // Pre-fill the form with the current period data
+    this.logForm = {
+      patient_id: ongoingPeriod.patient_id,
+      start_date: ongoingPeriod.start_date,
+      cycle_length: ongoingPeriod.cycle_length || 28,
+      period_length: ongoingPeriod.period_length || 5,
+      flow_intensity: ongoingPeriod.flow_intensity || 'medium',
+      symptoms: ongoingPeriod.symptoms || [],
+      period_description: ongoingPeriod.period_description || '',
+    };
+
+    // Show the form
+    this.showLogForm.set(true);
+
+    // Scroll to the form
+    setTimeout(() => {
+      const formElement = document.querySelector('.period-log-form');
+      if (formElement) {
+        formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+
+    // Show success message
+    alert(
+      'Period data loaded for editing. You can now update the details or add an end date.'
+    );
+  }
+
   // =========== DATE FORMATTING ===========
   formatDate(dateString?: string): string {
     if (!dateString) return '';
 
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('vi-VN', {
+      // Use a clearer format: "28 Aug 2024" instead of "28/08/2024"
+      return date.toLocaleDateString('en-GB', {
         day: '2-digit',
-        month: '2-digit',
+        month: 'short',
         year: 'numeric',
       });
+    } catch {
+      return dateString;
+    }
+  }
+
+  // Debug method to show raw date values
+  formatDateWithRaw(dateString?: string): string {
+    if (!dateString) return '';
+
+    try {
+      const date = new Date(dateString);
+      const formatted = date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+      // Show both formatted and raw for debugging
+      return `${formatted} (${dateString})`;
     } catch {
       return dateString;
     }
@@ -510,20 +746,13 @@ export class PeriodTrackingComponent implements OnInit {
   }
 
   getPeriodLength(): number {
-    // Calculate average period length from history
+    // Calculate average period length from history or return default
     const history = this.periodHistory();
     if (history.length === 0) return 5;
 
     const lengths = history
-      .filter((entry) => entry.end_date)
-      .map((entry) => {
-        const start = new Date(entry.start_date);
-        const end = new Date(entry.end_date!);
-        return (
-          Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) +
-          1
-        );
-      });
+      .filter((entry) => entry.period_length) // Only entries with period_length
+      .map((entry) => entry.period_length!);
 
     return lengths.length > 0
       ? Math.round(lengths.reduce((a, b) => a + b, 0) / lengths.length)
@@ -535,8 +764,6 @@ export class PeriodTrackingComponent implements OnInit {
     const history = this.periodHistory();
     return history.length;
   }
-
-
 
   savePeriodData(): void {
     // Validate form before submission

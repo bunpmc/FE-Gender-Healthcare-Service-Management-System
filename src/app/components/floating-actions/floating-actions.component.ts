@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Subject, takeUntil, debounceTime } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { SupportChatComponent } from '../support-chat/support-chat.component';
@@ -21,6 +21,7 @@ import {
   ChatRequest,
   ChatResponse,
   DoctorRecommendation,
+  N8nWebhookResponse,
 } from '../../models/chatbot.model';
 
 @Component({
@@ -65,10 +66,24 @@ export class FloatingActionsComponent implements AfterViewChecked, OnDestroy {
   quickReplyText: string = '';
   showQuickReplies = false;
 
+  // Friendly thinking messages
+  currentThinkingMessage: string = '';
+  private thinkingMessages: string[] = [
+    'AI_CHAT.THINKING.DEFAULT',
+    'AI_CHAT.THINKING.PROCESSING',
+    'AI_CHAT.THINKING.ALMOST_DONE',
+    'AI_CHAT.THINKING.OOPS_LONGER',
+    'AI_CHAT.THINKING.BEAR_WITH_ME',
+    'AI_CHAT.THINKING.WORKING_HARD',
+  ];
+  private thinkingMessageIndex = 0;
+  private thinkingInterval?: any;
+
   private destroy$ = new Subject<void>();
   private shouldScrollToBottom = false;
   private messageIdCounter = 0;
-  private readonly API_BASE_URL = 'https://0cae-14-169-234-113.ngrok-free.app';
+  private readonly N8N_WEBHOOK_URL =
+    'https://buishere.app.n8n.cloud/webhook/chatbot';
 
   constructor() {
     this.initQuickReplies();
@@ -90,6 +105,7 @@ export class FloatingActionsComponent implements AfterViewChecked, OnDestroy {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+    this.clearThinkingInterval();
   }
 
   @HostListener('window:scroll', [])
@@ -136,16 +152,9 @@ export class FloatingActionsComponent implements AfterViewChecked, OnDestroy {
 
   // AI Chat methods from support-chat
   private initQuickReplies() {
-    this.translate.get('AI_CHAT.QUICK_REPLIES').subscribe((list) => {
-      if (Array.isArray(list) && list.length > 0) {
-        this.quickReplyText = list[0];
-        this.showQuickReplies = true;
-      } else {
-        this.quickReplyText = '';
-        this.showQuickReplies = false;
-      }
-      this.cdr.markForCheck();
-    });
+    // Always show quick replies since we have hardcoded suggestions
+    this.showQuickReplies = true;
+    this.cdr.markForCheck();
   }
 
   private initializeChat() {
@@ -163,6 +172,77 @@ export class FloatingActionsComponent implements AfterViewChecked, OnDestroy {
 
   private generateMessageId(): string {
     return `msg_${++this.messageIdCounter}_${Date.now()}`;
+  }
+
+  private formatAIResponse(response: string): string {
+    if (!response) return '';
+
+    // First, handle doctor images and profile links specially
+    let formatted = response
+      // Convert doctor images to HTML img tags
+      .replace(
+        /\[(\/([\w\-\.]+\.webp))\]/g,
+        '<div class="doctor-image-container"><img src="https://xzxxodxplyetecrsbxmc.supabase.co/storage/v1/object/public/staff-uploads$1" alt="Doctor Photo" class="doctor-image" /></div>'
+      )
+      // Convert doctor profile links to clickable HTML links (handles various ID formats)
+      .replace(
+        /http:\/\/localhost:4200\/doctor\/([\w\-\.]+)/g,
+        '<a href="http://localhost:4200/doctor/$1" target="_blank" class="doctor-link">👨‍⚕️ View Doctor Profile</a>'
+      )
+      // Remove headers (# ## ###)
+      .replace(/^#{1,6}\s+/gm, '')
+      // Keep bold formatting but make it HTML
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/__(.*?)__/g, '<strong>$1</strong>')
+      // Keep italic formatting but make it HTML
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/_(.*?)_/g, '<em>$1</em>')
+      // Remove code blocks ```code```
+      .replace(/```[\s\S]*?```/g, '')
+      // Remove inline code `code`
+      .replace(/`([^`]+)`/g, '$1')
+      // Remove strikethrough ~~text~~
+      .replace(/~~(.*?)~~/g, '$1')
+      // Remove blockquotes >
+      .replace(/^>\s+/gm, '')
+      // Remove horizontal rules ---
+      .replace(/^---+$/gm, '')
+      // Convert simple lists to better formatting
+      .replace(/^[\s]*[-\*\+]\s+/gm, '• ')
+      // Remove numbered lists but keep content
+      .replace(/^[\s]*\d+\.\s+/gm, '• ')
+      // Clean up extra whitespace but preserve paragraphs
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+
+    return formatted;
+  }
+
+  private startThinkingMessages(): void {
+    this.thinkingMessageIndex = 0;
+    this.updateThinkingMessage();
+
+    // Change message every 3 seconds
+    this.thinkingInterval = setInterval(() => {
+      this.thinkingMessageIndex =
+        (this.thinkingMessageIndex + 1) % this.thinkingMessages.length;
+      this.updateThinkingMessage();
+    }, 3000);
+  }
+
+  private updateThinkingMessage(): void {
+    const messageKey = this.thinkingMessages[this.thinkingMessageIndex];
+    this.translate.get(messageKey).subscribe((message) => {
+      this.currentThinkingMessage = message;
+      this.cdr.markForCheck();
+    });
+  }
+
+  private clearThinkingInterval(): void {
+    if (this.thinkingInterval) {
+      clearInterval(this.thinkingInterval);
+      this.thinkingInterval = undefined;
+    }
   }
 
   private setCurrentMsg(msg: ChatMessage, showClear: boolean = false): void {
@@ -197,58 +277,101 @@ export class FloatingActionsComponent implements AfterViewChecked, OnDestroy {
 
     this.message = '';
     this.isTyping = true;
+    this.startThinkingMessages();
     this.cdr.markForCheck();
 
+    const enhancedQuery = `${userMessage}
+
+Answer like you're a caring friend having a normal conversation. Use simple, everyday language that's easy to understand. Write in flowing sentences and natural paragraphs - no lists, no bullet points, no numbers, no symbols. Just talk to me like a real person would.
+
+IMPORTANT: When recommending doctors, show ONLY 1 doctor (the best match). Include their name, specialty, brief description, their profile image, and profile link.
+
+For the doctor image, use this format: [/doctor1.webp] where the filename matches the doctor.
+For the profile link, use this EXACT format: http://localhost:4200/doctor/{doctor_id} where {doctor_id} is the actual doctor's unique ID. DO NOT show the doctor ID in the text, just include the full URL.
+
+Example: "I recommend Dr. Sarah Johnson, a gynecologist specializing in reproductive health. [/doctor1.webp] You can view her profile at http://localhost:4200/doctor/dr-sarah-johnson-123"`;
+
     const chatRequest: ChatRequest = {
-      query: userMessage,
+      query: enhancedQuery,
       user_id: this.userId,
     };
 
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    });
+
+    console.log('Sending request to n8n webhook:', {
+      url: this.N8N_WEBHOOK_URL,
+      payload: chatRequest,
+    });
+
     this.http
-      .post<ChatResponse>(`${this.API_BASE_URL}/chat`, chatRequest)
+      .post<N8nWebhookResponse>(this.N8N_WEBHOOK_URL, chatRequest, { headers })
       .pipe(takeUntil(this.destroy$), debounceTime(100))
       .subscribe({
         next: (response) => {
+          console.log('Received response from n8n webhook:', response);
+          console.log('Response type:', typeof response);
+          console.log('Is array:', Array.isArray(response));
+
           this.isTyping = false;
-          if (response.session_id && !this.userId) {
-            this.sessionId = response.session_id;
+          this.clearThinkingInterval();
+
+          // Extract the text from response
+          let botText = '';
+
+          // Handle array response format
+          let responseData: any;
+          if (Array.isArray(response) && response.length > 0) {
+            responseData = response[0];
+            console.log(
+              'Response is array, using first element:',
+              responseData
+            );
+          } else {
+            responseData = response;
           }
+
+          if (responseData && responseData.output) {
+            botText = this.formatAIResponse(responseData.output);
+          } else if (responseData && responseData.answer) {
+            botText = this.formatAIResponse(responseData.answer);
+          } else if (typeof responseData === 'string') {
+            botText = this.formatAIResponse(responseData);
+          } else {
+            botText = 'No response received';
+            console.warn('Unexpected response format:', response);
+          }
+
+          console.log('Bot text to display:', botText);
+
+          // Note: n8n webhook doesn't provide session_id or doctor_recommendations
+          // If needed, these features would need to be implemented in the n8n workflow
           this.setCurrentMsg(
             {
               id: this.generateMessageId(),
               from: 'bot',
-              text: response.response,
+              text: botText,
               timestamp: new Date(),
-              doctorRecommendations: response.doctor_recommendations,
             },
             true
           );
 
-          if (
-            response.doctor_recommendations &&
-            response.doctor_recommendations.length > 0
-          ) {
-            this.translate
-              .get('AI_CHAT.DOCTOR_FOUND', {
-                count: response.doctor_recommendations.length,
-              })
-              .subscribe((msg) => {
-                setTimeout(() => {
-                  this.setCurrentMsg(
-                    {
-                      id: this.generateMessageId(),
-                      from: 'bot',
-                      text: msg,
-                      timestamp: new Date(),
-                    },
-                    true
-                  );
-                }, 1000);
-              });
-          }
+          // Doctor recommendations feature disabled for n8n webhook
+          // If needed, this would need to be implemented in the n8n workflow
         },
         error: (error) => {
+          console.error('Error calling n8n webhook:', error);
+          console.error('Error details:', {
+            status: error.status,
+            statusText: error.statusText,
+            message: error.message,
+            url: error.url,
+            error: error.error,
+          });
           this.isTyping = false;
+          this.clearThinkingInterval();
           this.isConnected = false;
           this.getErrorMessage(error);
 
@@ -283,10 +406,11 @@ export class FloatingActionsComponent implements AfterViewChecked, OnDestroy {
 
   getQuickReplies(): string[] {
     return [
-      'How can I book an appointment?',
-      'What services do you offer?',
-      'What are your operating hours?',
-      'How can I contact support?',
+      'Find me a gynecologist',
+      'I need hormone therapy help',
+      'Period problems and pain',
+      'Mental health support',
+      'Book an appointment',
     ];
   }
 

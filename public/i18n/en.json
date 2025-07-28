@@ -175,13 +175,26 @@
     "CONNECTION_LOST": "Connection lost. Trying to reconnect...",
     "QUICK_REPLIES_TITLE": "Suggested questions",
     "QUICK_REPLIES": [
-      "How can I help you?",
       "Find me a gynecologist",
       "I need a hormone specialist",
-      "Show me available doctors",
-      "I need technical support"
+      "What gender-affirming services do you offer?",
+      "How do I start hormone therapy?",
+      "I need mental health support for gender dysphoria",
+      "What are the requirements for gender confirmation surgery?",
+      "I have irregular periods, what should I do?",
+      "How to manage period pain and cramps?",
+      "When should I be concerned about my menstrual cycle?",
+      "Show me available doctors"
     ],
     "TYPING": "AI is thinking...",
+    "THINKING": {
+      "DEFAULT": "AI is thinking... 🤔",
+      "PROCESSING": "Processing your request... ⚡",
+      "ALMOST_DONE": "Almost done! Just a moment... ⏳",
+      "OOPS_LONGER": "Oops... it took more than I expected! 😅",
+      "BEAR_WITH_ME": "Bear with me, I'm working on it... 🐻",
+      "WORKING_HARD": "Working hard to give you the best answer! 💪"
+    },
     "WELCOME": "Hello! I'm your healthcare assistant. How can I help you today? 😊",
     "INPUT_HINT": "Press Enter to send • Shift + Enter for new line",
     "CHAT_ERROR": {
