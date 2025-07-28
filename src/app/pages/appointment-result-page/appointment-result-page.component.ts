@@ -100,6 +100,7 @@ export class AppointmentResultComponent implements OnInit {
         errorDetails:
           'Failed to parse appointment information. Please try booking again.',
       };
+      
       this.isLoading = false;
       sessionStorage.removeItem('appointmentResult');
     }
