@@ -34,6 +34,11 @@ interface AppointmentResult {
     };
   };
   errorDetails?: string;
+  httpError?: {
+    status: number;
+    statusText: string;
+    details: any;
+  };
 }
 
 @Component({
@@ -75,6 +80,10 @@ export class AppointmentResultComponent implements OnInit {
         this.result = appointmentData;
         this.isLoading = false;
         sessionStorage.removeItem('appointmentResult');
+        console.log(
+          '📺 DISPLAYING SUCCESS RESULT TO USER:',
+          this.result?.message
+        );
         return;
       }
 
@@ -100,7 +109,7 @@ export class AppointmentResultComponent implements OnInit {
         errorDetails:
           'Failed to parse appointment information. Please try booking again.',
       };
-      
+
       this.isLoading = false;
       sessionStorage.removeItem('appointmentResult');
     }
@@ -139,6 +148,12 @@ export class AppointmentResultComponent implements OnInit {
               },
             };
             console.log('✅ Appointment created successfully');
+
+            // Clear the profile choice from localStorage after successful appointment creation
+            localStorage.removeItem('appointmentProfileChoice');
+            console.log(
+              '🧹 Cleared appointment profile choice from localStorage'
+            );
           } else {
             // API returned success: false
             this.result = {
@@ -160,17 +175,56 @@ export class AppointmentResultComponent implements OnInit {
         error: (error) => {
           console.error('❌ Error creating appointment:', error);
 
-          // Network or other error
+          // Check if this is a specific business logic error (400 status)
+          let errorMessage = 'Failed to create appointment';
+          let errorDetails =
+            'Network error occurred. Please check your connection and try again.';
+
+          if (error.status === 400 && error.error) {
+            // Handle specific business logic errors from the edge function
+            if (error.error.error) {
+              errorMessage = 'Appointment booking failed';
+              errorDetails = error.error.error;
+              console.log(
+                '📋 Business logic error details:',
+                error.error.details
+              );
+            } else if (error.error.message) {
+              errorMessage = 'Appointment booking failed';
+              errorDetails = error.error.message;
+            }
+          } else if (error.message) {
+            errorDetails = error.message;
+          }
+
           this.result = {
             success: false,
-            message: 'Failed to create appointment',
+            message: errorMessage,
             appointmentData: appointmentData.appointmentData,
             bookingDetails: appointmentData.bookingDetails,
-            errorDetails: `Error: ${
-              error.message ||
-              'Network error occurred. Please check your connection and try again.'
-            }`,
+            errorDetails: errorDetails,
+            httpError: {
+              status: error.status,
+              statusText: error.statusText,
+              details: error.error?.details || null,
+            },
           };
+
+          console.log('🔍 Final error result for display:', this.result);
+          console.log(
+            '📺 USER WILL SEE - Main Error Message:',
+            this.result?.message
+          );
+          console.log(
+            '📺 USER WILL SEE - Error Details:',
+            this.result?.errorDetails
+          );
+          if (this.result?.httpError?.details) {
+            console.log(
+              '📺 Additional Error Details Available:',
+              this.result.httpError.details
+            );
+          }
 
           this.isLoading = false;
           this.isProcessing = false;

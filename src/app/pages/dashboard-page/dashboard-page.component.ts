@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { Subject, forkJoin } from 'rxjs';
 import { takeUntil, finalize } from 'rxjs/operators';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 import { HeaderComponent } from '../../components/header/header.component';
 import { FooterComponent } from '../../components/footer/footer.component';
@@ -97,7 +98,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     confirmedAppointments: 0,
   };
 
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService, private http: HttpClient) {}
 
   // Appointment mapping to dates (day of month)
   appointmentMapping: { [key: number]: DashboardAppointment[] } = {};
@@ -828,48 +829,240 @@ export class DashboardComponent implements OnInit, OnDestroy {
         avatarUrl = uploadResult;
       }
 
-      // Prepare updates for patient table
-      const updates: Partial<Patient> = {
-        full_name: this.editdashboard.name,
-        bio: this.editdashboard.bio,
-        phone: this.editdashboard.phone,
-        email: this.editdashboard.email,
-        date_of_birth: this.editdashboard.dateOfBirth || null,
-        gender: this.editdashboard.gender,
-        image_link: avatarUrl || null,
-      };
+      // First, update using the edge function
+      const edgeFunctionSuccess = await this.updatePatientViaEdgeFunction(
+        avatarUrl
+      );
 
-      this.authService
-        .updatePatientProfile(currentPatientId, updates)
-        .pipe(
-          takeUntil(this.destroy$),
-          finalize(() => {
-            this.isProfileSaving = false;
-          })
-        )
-        .subscribe({
-          next: (updatedPatient) => {
-            // Update local dashboard data
-            this.dashboard = { ...this.editdashboard };
-            this.isEditing = false;
+      if (edgeFunctionSuccess) {
+        // If edge function succeeds, also update local database for consistency
+        const updates: Partial<Patient> = {
+          full_name: this.editdashboard.name,
+          bio: this.editdashboard.bio,
+          phone: this.editdashboard.phone,
+          email: this.editdashboard.email,
+          date_of_birth: this.editdashboard.dateOfBirth || null,
+          gender: this.editdashboard.gender,
+          image_link: avatarUrl || null,
+        };
 
-            // Reset avatar selection
-            this.resetAvatarSelection();
+        this.authService
+          .updatePatientProfile(currentPatientId, updates)
+          .pipe(
+            takeUntil(this.destroy$),
+            finalize(() => {
+              this.isProfileSaving = false;
+            })
+          )
+          .subscribe({
+            next: (updatedPatient) => {
+              // Update local dashboard data
+              this.dashboard = { ...this.editdashboard };
+              this.isEditing = false;
 
-            // Update auth service with new patient data
-            this.authService.updateCurrentPatient(updatedPatient);
+              // Reset avatar selection
+              this.resetAvatarSelection();
 
-            console.log('Profile updated successfully');
-          },
-          error: (error) => {
-            console.error('Error updating profile:', error);
-            this.profileError = 'Failed to update profile. Please try again.';
-          },
-        });
+              // Update auth service with new patient data
+              this.authService.updateCurrentPatient(updatedPatient);
+
+              console.log(
+                'Profile updated successfully via both edge function and local database'
+              );
+            },
+            error: (error) => {
+              console.error(
+                'Error updating local profile after edge function success:',
+                error
+              );
+              // Still consider it a success since edge function worked
+              this.dashboard = { ...this.editdashboard };
+              this.isEditing = false;
+              this.resetAvatarSelection();
+              console.log(
+                'Profile updated successfully via edge function (local database update failed)'
+              );
+            },
+          });
+      } else {
+        // If edge function fails, fall back to local database update only
+        console.log(
+          'Edge function failed, falling back to local database update only'
+        );
+
+        const updates: Partial<Patient> = {
+          full_name: this.editdashboard.name,
+          bio: this.editdashboard.bio,
+          phone: this.editdashboard.phone,
+          email: this.editdashboard.email,
+          date_of_birth: this.editdashboard.dateOfBirth || null,
+          gender: this.editdashboard.gender,
+          image_link: avatarUrl || null,
+        };
+
+        this.authService
+          .updatePatientProfile(currentPatientId, updates)
+          .pipe(
+            takeUntil(this.destroy$),
+            finalize(() => {
+              this.isProfileSaving = false;
+            })
+          )
+          .subscribe({
+            next: (updatedPatient) => {
+              // Update local dashboard data
+              this.dashboard = { ...this.editdashboard };
+              this.isEditing = false;
+
+              // Reset avatar selection
+              this.resetAvatarSelection();
+
+              // Update auth service with new patient data
+              this.authService.updateCurrentPatient(updatedPatient);
+
+              console.log(
+                'Profile updated successfully via local database (edge function failed)'
+              );
+            },
+            error: (error) => {
+              console.error('Error updating profile:', error);
+              this.profileError = 'Failed to update profile. Please try again.';
+            },
+          });
+      }
     } catch (error) {
       console.error('Error in profile save process:', error);
       this.profileError = 'An unexpected error occurred. Please try again.';
       this.isProfileSaving = false;
+    }
+  }
+
+  /**
+   * Update patient information using the edge function
+   */
+  private async updatePatientViaEdgeFunction(
+    avatarUrl: string | null
+  ): Promise<boolean> {
+    try {
+      console.log('🚀 DASHBOARD - Calling update-patient edge function...');
+
+      const currentPatientId = this.authService.getCurrentPatientId();
+      if (!currentPatientId) {
+        console.error('❌ No patient ID found for edge function update');
+        return false;
+      }
+
+      // Get access token from localStorage or sessionStorage
+      const accessToken =
+        localStorage.getItem('access_token') ||
+        sessionStorage.getItem('access_token');
+
+      if (!accessToken) {
+        console.warn(
+          '⚠️ DASHBOARD - No access token found in localStorage or sessionStorage'
+        );
+        console.error('❌ DASHBOARD - No valid auth token available');
+        return false;
+      }
+
+      console.log('🔑 DASHBOARD - Found access token for edge function');
+
+      // Prepare FormData for multipart/form-data request
+      const formData = new FormData();
+      formData.append('patient_id', currentPatientId);
+      formData.append('full_name', this.editdashboard.name);
+      formData.append('phone', this.editdashboard.phone);
+      formData.append('email', this.editdashboard.email);
+      formData.append('date_of_birth', this.editdashboard.dateOfBirth || '');
+      formData.append('gender', this.editdashboard.gender);
+
+      // Optional fields
+      if (this.editdashboard.bio) {
+        formData.append('bio', this.editdashboard.bio);
+      }
+
+      // Handle image upload if a new file was selected
+      if (this.selectedAvatarFile) {
+        formData.append('image', this.selectedAvatarFile);
+        console.log(
+          '📸 DASHBOARD - Including image file in request:',
+          this.selectedAvatarFile.name
+        );
+      }
+
+      // Add empty arrays for medical fields (as expected by the edge function)
+      formData.append('allergies', JSON.stringify([]));
+      formData.append('chronic_conditions', JSON.stringify([]));
+      formData.append('past_surgeries', JSON.stringify([]));
+      formData.append('vaccination_status', 'unknown');
+      formData.append('patient_status', 'active');
+
+      console.log('� DASHBOARD - FormData prepared with fields:');
+      for (const [key, value] of formData.entries()) {
+        if (key === 'image') {
+          console.log(`  ${key}: [File] ${(value as File).name}`);
+        } else {
+          console.log(`  ${key}: ${value}`);
+        }
+      }
+
+      const headers = new HttpHeaders({
+        Authorization: `Bearer ${accessToken}`,
+        // Don't set Content-Type for FormData - let the browser set it with boundary
+      });
+
+      console.log('📋 DASHBOARD - Request headers:', {
+        Authorization: `Bearer ${accessToken.substring(0, 20)}...`,
+        'Content-Type': 'multipart/form-data (auto-set by browser)',
+      });
+
+      // Call the update-patient edge function
+      const response = await this.http
+        .post<any>(
+          'https://xzxxodxplyetecrsbxmc.supabase.co/functions/v1/update-patient',
+          formData,
+          { headers }
+        )
+        .toPromise();
+
+      console.log('✅ DASHBOARD - Edge function response:', response);
+
+      if (response?.patient) {
+        console.log(
+          '🎉 DASHBOARD - Patient updated successfully via edge function!'
+        );
+        console.log('📋 Updated patient details:', response.patient);
+        console.log('🖼️ Image URL:', response.image_url);
+        console.log('💬 Message:', response.message);
+        return true;
+      } else {
+        console.log('❌ DASHBOARD - Edge function returned no patient data');
+        console.log('💬 Error message:', response?.error || 'Unknown error');
+        return false;
+      }
+    } catch (error: any) {
+      console.error(
+        '❌ DASHBOARD - Error calling update-patient edge function:',
+        error
+      );
+      console.log('📦 Error status:', error.status);
+      console.log('📦 Error body:', error.error);
+
+      // Handle specific error cases
+      if (error.status === 401) {
+        console.log(
+          '🔐 DASHBOARD - Authentication failed - token may be expired'
+        );
+      } else if (error.status === 403) {
+        console.log(
+          '🚫 DASHBOARD - Authorization failed - patient_id mismatch'
+        );
+      } else if (error.status === 400) {
+        console.log('📝 DASHBOARD - Bad request - check required fields');
+      }
+
+      console.log('🚨 DASHBOARD - Edge function update failed');
+      return false;
     }
   }
 

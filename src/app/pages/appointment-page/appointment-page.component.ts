@@ -361,6 +361,10 @@ export class AppointmentPageComponent implements OnInit {
     console.log('👤 Selecting profile type:', useProfile);
     this.booking.useProfile = useProfile;
 
+    // Store the profile choice in localStorage for appointment result page
+    localStorage.setItem('appointmentProfileChoice', useProfile);
+    console.log('💾 Stored profile choice in localStorage:', useProfile);
+
     if (useProfile === 'me') {
       console.log('📝 Auto-filling profile with user data');
       this.autoFillProfile();
@@ -663,6 +667,7 @@ export class AppointmentPageComponent implements OnInit {
     this.errorMessage = null;
     this.successMessage = null;
     localStorage.removeItem('bookingState');
+    localStorage.removeItem('appointmentProfileChoice');
   }
 
   hasBookingData(): boolean {

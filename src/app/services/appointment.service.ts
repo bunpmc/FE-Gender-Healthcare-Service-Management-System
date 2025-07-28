@@ -56,100 +56,160 @@ export class AppointmentService {
     const schedule = this.mapScheduleToEdgeFunction(request.schedule);
     console.log('📅 Mapped schedule:', schedule);
 
-    // Get current user's patient_id
-    const currentUser = this.authService.getCurrentUser();
-    const patient_id = currentUser?.patientId;
+    // Get profile choice from localStorage
+    const profileChoice = localStorage.getItem('appointmentProfileChoice');
+    console.log('👤 Profile choice from localStorage:', profileChoice);
 
-    if (!patient_id) {
-      console.error('❌ No patient_id found for current user');
-      throw new Error('User must be logged in to create appointment');
+    // Determine which edge function to use based on profile choice
+    let edgeFunction: string;
+    let payload: any;
+
+    if (profileChoice === 'me') {
+      // Use patient-id endpoint for "book for me"
+      const currentUser = this.authService.getCurrentUser();
+      const patient_id = currentUser?.patientId;
+
+      if (!patient_id) {
+        console.error('❌ No patient_id found for current user');
+        throw new Error('User must be logged in to create appointment');
+      }
+
+      edgeFunction =
+        'https://xzxxodxplyetecrsbxmc.supabase.co/functions/v1/create-appointment-via-patient-id';
+      payload = {
+        patient_id: patient_id,
+        email: request.email || null,
+        fullName: request.full_name,
+        message: request.message,
+        phone: e164Phone,
+        schedule: schedule,
+        gender: request.gender || 'other',
+        date_of_birth: request.date_of_birth || '1990-01-01',
+        doctor_id: request.doctor_id,
+        preferred_date: request.preferred_date || null,
+        preferred_time: request.preferred_time || null,
+        preferred_slot_id: request.slot_id || null,
+        visit_type: request.visit_type || 'consultation',
+      };
+    } else {
+      // Use general create-appointment endpoint for "another profile"
+      edgeFunction =
+        'https://xzxxodxplyetecrsbxmc.supabase.co/functions/v1/create-appointment';
+      payload = {
+        email: request.email || null,
+        fullName: request.full_name,
+        message: request.message,
+        phone: e164Phone,
+        schedule: schedule,
+        gender: request.gender || 'other',
+        date_of_birth: request.date_of_birth || '1990-01-01',
+        doctor_id: request.doctor_id,
+        preferred_date: request.preferred_date || null,
+        preferred_time: request.preferred_time || null,
+        preferred_slot_id: request.slot_id || null,
+        visit_type: request.visit_type || 'consultation',
+      };
     }
 
-    // Prepare payload for edge function with patient_id
-    const payload = {
-      patient_id: patient_id,
-      email: request.email || null,
-      fullName: request.full_name,
-      message: request.message,
-      phone: e164Phone,
-      schedule: schedule,
-      gender: request.gender || 'other',
-      date_of_birth: request.date_of_birth || '1990-01-01', // Default if not provided
-      doctor_id: request.doctor_id,
-      preferred_date: request.preferred_date || null,
-      preferred_time: request.preferred_time || null,
-      preferred_slot_id: request.slot_id || null,
-      visit_type: request.visit_type || 'consultation',
-    };
-
-    console.log('🌐 APPOINTMENT SERVICE - Calling edge function with payload:');
+    console.log('🌐 APPOINTMENT SERVICE - Using edge function:', edgeFunction);
     console.log('📦 Payload:', JSON.stringify(payload, null, 2));
+    console.log('🚀 STARTING APPOINTMENT CREATION REQUEST...');
 
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     });
 
-    return this.http
-      .post<any>(
-        'https://xzxxodxplyetecrsbxmc.supabase.co/functions/v1/create-appointment-via-patient-id',
-        payload,
-        { headers }
-      )
-      .pipe(
-        tap({
-          next: (response) => {
+    return this.http.post<any>(edgeFunction, payload, { headers }).pipe(
+      tap({
+        next: (response) => {
+          console.log(
+            '✅ APPOINTMENT SERVICE - Edge function HTTP success response:',
+            response
+          );
+          console.log('📦 Response data:', response.data);
+          console.log('📝 Response message:', response.message);
+
+          // Check if the appointment creation was actually successful
+          if (response.success === true) {
             console.log(
-              '✅ APPOINTMENT SERVICE - Edge function success response:',
-              response
+              '🎉 APPOINTMENT CREATION SUCCESS - Appointment was created successfully!'
             );
-            console.log('📦 Response data:', response.data);
-            console.log('📝 Response message:', response.message);
-          },
-          error: (error) => {
-            console.log('❌ APPOINTMENT SERVICE - Edge function error:', error);
-            console.log('📦 Error status:', error.status);
-            console.log('📦 Error body:', error.error);
-          },
-        }),
-        map((response) => {
-          // Transform edge function response to AppointmentResponse format
-          if (response.success) {
-            return {
-              success: true,
-              message: response.message,
-              data: {
-                appointment: response.data.appointment,
-                slot_info: response.data.slot_info,
-                notifications: response.data.notifications,
-              },
-            };
+            console.log(
+              '📋 Appointment details:',
+              response.data || response.appointment_details
+            );
+            if (response.appointment_id) {
+              console.log('🆔 Appointment ID:', response.appointment_id);
+            }
+            if (response.guest_appointment_id) {
+              console.log(
+                '🆔 Guest Appointment ID:',
+                response.guest_appointment_id
+              );
+            }
           } else {
-            return {
-              success: false,
-              message: response.error || 'Appointment creation failed',
-            };
+            console.log(
+              '❌ APPOINTMENT CREATION FAILED - Edge function returned success: false'
+            );
+            console.log(
+              '💬 Failure reason:',
+              response.message || response.error
+            );
+            console.log('🔍 Full error response:', response);
           }
-        }),
-        catchError((error) => {
-          console.error('❌ APPOINTMENT SERVICE - HTTP Error:', error);
-
-          let errorMessage = 'Appointment creation failed. Please try again.';
-
-          if (error.status === 400 && error.error?.error) {
-            errorMessage = error.error.error;
-          } else if (error.status === 500) {
-            errorMessage = 'Server error. Please try again later.';
-          } else if (error.message) {
-            errorMessage = error.message;
-          }
-
-          return of({
+        },
+        error: (error) => {
+          console.log(
+            '❌ APPOINTMENT SERVICE - Edge function HTTP error:',
+            error
+          );
+          console.log('📦 Error status:', error.status);
+          console.log('📦 Error body:', error.error);
+          console.log(
+            '🚨 APPOINTMENT CREATION FAILED - Network/HTTP error occurred'
+          );
+          console.log('🔍 Full error object:', error);
+        },
+      }),
+      map((response) => {
+        // Transform edge function response to AppointmentResponse format
+        if (response.success) {
+          return {
+            success: true,
+            message: response.message,
+            data: {
+              appointment: response.data.appointment,
+              slot_info: response.data.slot_info,
+              notifications: response.data.notifications,
+            },
+          };
+        } else {
+          return {
             success: false,
-            message: errorMessage,
-            details: error.error?.details || null,
-          });
-        })
-      );
+            message: response.error || 'Appointment creation failed',
+          };
+        }
+      }),
+      catchError((error) => {
+        console.error('❌ APPOINTMENT SERVICE - HTTP Error:', error);
+
+        let errorMessage = 'Appointment creation failed. Please try again.';
+
+        if (error.status === 400 && error.error?.error) {
+          errorMessage = error.error.error;
+        } else if (error.status === 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+
+        return of({
+          success: false,
+          message: errorMessage,
+          details: error.error?.details || null,
+        });
+      })
+    );
   }
 
   /**
