@@ -16,10 +16,16 @@ export class GoogleComponent {
     try {
       this.isLoading = true;
 
+      // Get the current origin dynamically
+      const currentOrigin = environment.getCurrentOrigin();
+      const redirectUrl = `${currentOrigin}${environment.authCallbackUrl}`;
+
+      console.log('Using redirect URL:', redirectUrl);
+
       const { error } = await this.supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`, // <-- redirect đúng về frontend
+          redirectTo: redirectUrl,
         },
       });
 

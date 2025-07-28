@@ -13,8 +13,9 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 export class ForgotPasswordComponent {
   @Output() close = new EventEmitter<void>();
 
-  step = signal(1); // 1: nhập sđt, 2: nhập otp + mk mới, 3: done
+  step = signal(1); // 1: nhập sđt + email, 2: nhập otp + mk mới, 3: done
   phone = signal('');
+  email = signal('');
   otp = signal('');
   newPassword = signal('');
   confirmPassword = signal('');
@@ -31,18 +32,25 @@ export class ForgotPasswordComponent {
     this.errorMsg.set('');
     this.successMsg.set('');
     if (!form.valid) return;
+
+    // Validate both phone and email are provided
+    if (!this.phone() || !this.email()) {
+      this.errorMsg.set('Vui lòng nhập đầy đủ số điện thoại và email');
+      return;
+    }
+
     this.isLoading.set(true);
+    // Use phone for OTP but email is for verification only
     this.authService.forgotPassword(this.phone()).subscribe({
       next: () => {
         this.successMsg.set(
-          this.translate.instant('FORGOT_PASSWORD.SUCCESS.OTP_SENT')
+          `Mã OTP đã được gửi đến số điện thoại ${this.phone()}. Email ${this.email()} sẽ được sử dụng để xác thực.`
         );
         this.step.set(2);
       },
       error: (err: any) => {
         const errorMsg =
-          err?.error?.message ||
-          this.translate.instant('FORGOT_PASSWORD.ERRORS.OTP_SEND_FAILED');
+          err?.error?.message || 'Gửi OTP thất bại. Vui lòng thử lại.';
         this.errorMsg.set(errorMsg);
       },
       complete: () => this.isLoading.set(false),
@@ -56,9 +64,7 @@ export class ForgotPasswordComponent {
     this.successMsg.set('');
     if (!form.valid) return;
     if (this.newPassword() !== this.confirmPassword()) {
-      this.errorMsg.set(
-        this.translate.instant('FORGOT_PASSWORD.ERRORS.PASSWORD_MISMATCH')
-      );
+      this.errorMsg.set('Mật khẩu xác nhận không khớp');
       return;
     }
     this.isLoading.set(true);
@@ -67,16 +73,14 @@ export class ForgotPasswordComponent {
       .subscribe({
         next: () => {
           this.successMsg.set(
-            this.translate.instant('FORGOT_PASSWORD.SUCCESS.PASSWORD_RESET')
+            'Đặt lại mật khẩu thành công! Bạn có thể đăng nhập với mật khẩu mới.'
           );
           this.step.set(3);
         },
         error: (err: any) => {
           const errorMsg =
             err?.error?.message ||
-            this.translate.instant(
-              'FORGOT_PASSWORD.ERRORS.INVALID_OTP_PASSWORD'
-            );
+            'Mã OTP không hợp lệ hoặc mật khẩu không đúng định dạng';
           this.errorMsg.set(errorMsg);
         },
         complete: () => this.isLoading.set(false),

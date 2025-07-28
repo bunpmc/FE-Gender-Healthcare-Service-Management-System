@@ -56,8 +56,18 @@ export class AppointmentService {
     const schedule = this.mapScheduleToEdgeFunction(request.schedule);
     console.log('📅 Mapped schedule:', schedule);
 
-    // Prepare payload for edge function
+    // Get current user's patient_id
+    const currentUser = this.authService.getCurrentUser();
+    const patient_id = currentUser?.patientId;
+
+    if (!patient_id) {
+      console.error('❌ No patient_id found for current user');
+      throw new Error('User must be logged in to create appointment');
+    }
+
+    // Prepare payload for edge function with patient_id
     const payload = {
+      patient_id: patient_id,
       email: request.email || null,
       fullName: request.full_name,
       message: request.message,
@@ -81,7 +91,7 @@ export class AppointmentService {
 
     return this.http
       .post<any>(
-        'https://xzxxodxplyetecrsbxmc.supabase.co/functions/v1/create-appointment',
+        'https://xzxxodxplyetecrsbxmc.supabase.co/functions/v1/create-appointment-via-patient-id',
         payload,
         { headers }
       )

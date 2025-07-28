@@ -18,4 +18,13 @@ export const environment = {
   // Keep the old key name for backward compatibility
   supabaseKey:
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh6eHhvZHhwbHlldGVjcnNieG1jIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNjM5NzE5NCwiZXhwIjoyMDUxOTczMTk0fQ.TDXlW3dIvvmYv5QKUsAy_vpU3U_x7BMQ1IdfEWmWtJQ',
+
+  // Auth redirect URLs
+  authCallbackUrl: '/auth/callback',
+
+  // Helper function to get current origin
+  getCurrentOrigin: () =>
+    typeof window !== 'undefined'
+      ? window.location.origin
+      : 'http://localhost:4200',
 };
