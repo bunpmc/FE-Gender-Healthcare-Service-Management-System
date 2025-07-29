@@ -21,13 +21,13 @@ import {
   template: `
     <div class="period-calendar">
       <!-- Calendar Header -->
-      <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center justify-between mb-4">
         <button
           (click)="previousMonth()"
-          class="p-3 rounded-full hover:bg-gray-100 transition-colors"
+          class="p-2 rounded-full hover:bg-gray-100 transition-colors"
         >
           <svg
-            class="w-6 h-6 text-gray-600"
+            class="w-4 h-4 text-gray-600"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -41,16 +41,16 @@ import {
           </svg>
         </button>
 
-        <h3 class="text-2xl font-bold text-gray-800">
+        <h3 class="text-lg font-bold text-gray-800">
           {{ monthYearDisplay() }}
         </h3>
 
         <button
           (click)="nextMonth()"
-          class="p-3 rounded-full hover:bg-gray-100 transition-colors"
+          class="p-2 rounded-full hover:bg-gray-100 transition-colors"
         >
           <svg
-            class="w-6 h-6 text-gray-600"
+            class="w-4 h-4 text-gray-600"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -66,10 +66,10 @@ import {
       </div>
 
       <!-- Calendar Grid -->
-      <div class="grid grid-cols-7 gap-0.5 mb-4">
+      <div class="grid grid-cols-7 gap-0.5 mb-3">
         <!-- Day Headers -->
         @for (day of dayHeaders; track day) {
-        <div class="text-center text-xs font-semibold text-gray-500 py-2">
+        <div class="text-center text-xs font-medium text-gray-500 py-0.5">
           {{ day }}
         </div>
         }
@@ -77,71 +77,45 @@ import {
         <!-- Calendar Days -->
         @for (day of calendarDays(); track day.dateString) {
         <div
-          class="relative aspect-square flex items-center justify-center text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer shadow-sm"
+          class="relative aspect-square flex items-center justify-center text-xs font-medium rounded-md transition-all duration-200 cursor-pointer"
           [ngClass]="getDayClasses(day)"
           (click)="onDayClick(day)"
         >
           <span class="relative z-10">{{ day.dayNumber }}</span>
 
-          <!-- Period Flow Indicator -->
+          <!-- Period Day Dot -->
           @if (day.isPeriodDay) {
-          <div class="absolute bottom-1 left-1/2 transform -translate-x-1/2">
-            <div class="w-2 h-2 rounded-full bg-white opacity-80"></div>
+          <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2">
+            <div class="w-1.5 h-1.5 rounded-full bg-red-500"></div>
           </div>
           }
 
-          <!-- Ongoing Period Indicator -->
-          @if (day.isPeriodDay && this.isOngoingPeriodDay(day.date)) {
-          <div class="absolute top-1 left-1">
-            <div class="w-2 h-2 rounded-full bg-white animate-pulse"></div>
+          <!-- Fertile Day Dot -->
+          @if (day.isFertileDay && !day.isPeriodDay) {
+          <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2">
+            <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
           </div>
           }
 
-          <!-- Peak Fertility Indicator -->
-          @if (day.isPeakFertility && !day.isPeriodDay) {
-          <div class="absolute top-1 right-1">
-            <div
-              class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"
-            ></div>
+          <!-- Ovulation Day Dot -->
+          @if (day.isOvulationDay && !day.isPeriodDay) {
+          <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2">
+            <div class="w-1.5 h-1.5 rounded-full bg-yellow-500"></div>
           </div>
           }
 
-          <!-- Optimal Conception Indicator -->
-          @if (day.isOptimalConception && !day.isPeriodDay) {
-          <div class="absolute bottom-1 right-1">
-            <div class="w-1.5 h-1.5 rounded-full bg-orange-600"></div>
+          <!-- Predicted Period Dot -->
+          @if (day.isPredictedPeriod && !day.isPeriodDay) {
+          <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2">
+            <div class="w-1.5 h-1.5 rounded-full bg-pink-400 opacity-70"></div>
           </div>
           }
 
           <!-- Late Period Indicator -->
           @if (day.isLatePeriod) {
-          <div class="absolute top-1 left-1/2 transform -translate-x-1/2">
-            <div class="text-xs font-bold text-red-800">
+          <div class="absolute top-0.5 left-1/2 transform -translate-x-1/2">
+            <div class="text-xs font-bold text-red-600">
               {{ day.daysLate }}d
-            </div>
-          </div>
-          }
-
-          <!-- Fertility Level Indicator -->
-          @if (day.fertilityLevel !== 'none' && !day.isPeriodDay) {
-          <div class="absolute bottom-1 left-1/2 transform -translate-x-1/2">
-            <div class="flex space-x-1">
-              @for (i of [1,2,3,4,5]; track i) {
-              <div
-                class="w-1 h-1.5 rounded-full shadow-sm"
-                [class]="{
-                  'bg-emerald-500': day.fertilityLevel === 'peak' && i <= 5,
-                  'bg-green-500': day.fertilityLevel === 'high' && i <= 4,
-                  'bg-yellow-500': day.fertilityLevel === 'moderate' && i <= 3,
-                  'bg-orange-500': day.fertilityLevel === 'low' && i <= 2,
-                  'bg-gray-300':
-                    (day.fertilityLevel === 'peak' && i > 5) ||
-                    (day.fertilityLevel === 'high' && i > 4) ||
-                    (day.fertilityLevel === 'moderate' && i > 3) ||
-                    (day.fertilityLevel === 'low' && i > 2)
-                }"
-              ></div>
-              }
             </div>
           </div>
           }
@@ -158,37 +132,57 @@ import {
 
       <!-- Legend -->
       <div
-        class="grid grid-cols-2 md:grid-cols-5 gap-3 p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl"
+        class="grid grid-cols-2 md:grid-cols-5 gap-2 p-2 bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg"
       >
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-1">
           <div
-            class="w-4 h-4 bg-gradient-to-br from-red-500 to-red-600 rounded-md shadow-lg ring-1 ring-red-300"
-          ></div>
-          <span class="text-xs text-gray-700 font-medium">Period</span>
+            class="relative w-3 h-3 bg-white border border-red-500 rounded-sm"
+          >
+            <div
+              class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-1.5 h-1.5 rounded-full bg-red-500"
+            ></div>
+          </div>
+          <span class="text-xs text-gray-600">Period</span>
         </div>
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-1">
           <div
-            class="w-4 h-4 bg-gradient-to-br from-emerald-400 to-emerald-500 rounded-md shadow-lg ring-1 ring-emerald-300"
-          ></div>
-          <span class="text-xs text-gray-700 font-medium">Peak Fertility</span>
+            class="relative w-3 h-3 bg-white border border-emerald-500 rounded-sm"
+          >
+            <div
+              class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-1.5 h-1.5 rounded-full bg-emerald-500"
+            ></div>
+          </div>
+          <span class="text-xs text-gray-600">Peak Fertility</span>
         </div>
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-1">
           <div
-            class="w-4 h-4 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-md shadow-lg ring-1 ring-yellow-300"
-          ></div>
-          <span class="text-xs text-gray-700 font-medium">Ovulation</span>
+            class="relative w-3 h-3 bg-white border border-yellow-500 rounded-sm"
+          >
+            <div
+              class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-1.5 h-1.5 rounded-full bg-yellow-500"
+            ></div>
+          </div>
+          <span class="text-xs text-gray-600">Ovulation</span>
         </div>
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-1">
           <div
-            class="w-4 h-4 bg-gradient-to-br from-orange-300 to-orange-400 border-2 border-orange-500 rounded-md shadow-lg"
-          ></div>
-          <span class="text-xs text-gray-700 font-medium">Best Conception</span>
+            class="relative w-3 h-3 bg-white border border-orange-400 rounded-sm"
+          >
+            <div
+              class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-1.5 h-1.5 rounded-full bg-orange-500"
+            ></div>
+          </div>
+          <span class="text-xs text-gray-600">Best Conception</span>
         </div>
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-1">
           <div
-            class="w-4 h-4 bg-gradient-to-br from-pink-200 to-pink-300 border-2 border-pink-500 border-dashed rounded-md shadow-lg"
-          ></div>
-          <span class="text-xs text-gray-700 font-medium">Predicted</span>
+            class="relative w-3 h-3 bg-white border border-pink-400 border-dashed rounded-sm"
+          >
+            <div
+              class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-1.5 h-1.5 rounded-full bg-pink-400 opacity-70"
+            ></div>
+          </div>
+          <span class="text-xs text-gray-600">Predicted</span>
         </div>
       </div>
     </div>
@@ -196,17 +190,19 @@ import {
   styles: [
     `
       .period-calendar {
-        @apply w-full;
+        @apply w-full max-w-sm mx-auto;
       }
 
       .aspect-square {
         aspect-ratio: 1;
-        min-height: 36px;
+        min-height: 22px;
+        max-height: 26px;
       }
 
       @media (max-width: 640px) {
         .aspect-square {
-          min-height: 32px;
+          min-height: 20px;
+          max-height: 24px;
         }
       }
     `,
@@ -245,121 +241,103 @@ export class PeriodCalendarComponent implements OnInit {
 
     // Base styling
     if (!day.isCurrentMonth) {
-      classes.push('text-gray-400', 'bg-gray-100');
+      classes.push('text-gray-400', 'bg-gray-50');
     } else {
       // Period day gets highest priority
       if (day.isPeriodDay) {
         classes.push(
-          'bg-gradient-to-br',
-          'from-red-500',
-          'to-red-600',
-          'text-white',
-          'shadow-xl',
-          'ring-4',
-          'ring-red-300',
-          'border-3',
-          'border-red-400'
+          'bg-white',
+          'text-red-600',
+          'border-2',
+          'border-red-500',
+          'shadow-sm',
+          'hover:bg-red-50'
         );
       }
       // Late period indicator
       else if (day.isLatePeriod) {
         classes.push(
-          'bg-gradient-to-br',
-          'from-red-300',
-          'to-red-400',
-          'text-red-900',
-          'border-3',
-          'border-red-600',
+          'bg-white',
+          'text-red-700',
+          'border-2',
+          'border-red-400',
+          'border-dashed',
           'animate-pulse',
-          'shadow-lg',
-          'ring-2',
-          'ring-red-300'
+          'shadow-sm',
+          'hover:bg-red-50'
         );
       }
       // Peak fertility (only if not period day)
       else if (day.isPeakFertility) {
         classes.push(
-          'bg-gradient-to-br',
-          'from-emerald-400',
-          'to-emerald-500',
-          'text-white',
-          'shadow-xl',
-          'ring-4',
-          'ring-emerald-300',
-          'border-3',
-          'border-emerald-500'
+          'bg-white',
+          'text-emerald-600',
+          'border-2',
+          'border-emerald-500',
+          'shadow-sm',
+          'hover:bg-emerald-50'
         );
       }
       // Ovulation day (only if not period day)
       else if (day.isOvulationDay) {
         classes.push(
-          'bg-gradient-to-br',
-          'from-yellow-400',
-          'to-yellow-500',
-          'text-yellow-900',
-          'shadow-xl',
-          'ring-4',
-          'ring-yellow-300',
-          'border-3',
-          'border-yellow-500'
+          'bg-white',
+          'text-yellow-700',
+          'border-2',
+          'border-yellow-500',
+          'shadow-sm',
+          'hover:bg-yellow-50'
         );
       }
       // Optimal conception (only if not period/ovulation day)
       else if (day.isOptimalConception) {
         classes.push(
-          'bg-gradient-to-br',
-          'from-orange-300',
-          'to-orange-400',
-          'text-orange-900',
-          'shadow-lg',
-          'ring-2',
-          'ring-orange-200',
-          'border-3',
-          'border-orange-500'
+          'bg-white',
+          'text-orange-600',
+          'border-2',
+          'border-orange-400',
+          'shadow-sm',
+          'hover:bg-orange-50'
         );
       }
       // Regular fertile day (only if not any of the above)
       else if (day.isFertileDay) {
         classes.push(
-          'bg-gradient-to-br',
-          'from-green-300',
-          'to-green-400',
-          'text-green-900',
-          'shadow-lg',
-          'ring-2',
-          'ring-green-200',
-          'border-3',
-          'border-green-400'
+          'bg-white',
+          'text-green-600',
+          'border-2',
+          'border-green-400',
+          'shadow-sm',
+          'hover:bg-green-50'
         );
       }
       // Predicted period (only if not any of the above)
       else if (day.isPredictedPeriod) {
         classes.push(
-          'bg-gradient-to-br',
-          'from-pink-200',
-          'to-pink-300',
-          'text-pink-900',
-          'shadow-lg',
-          'ring-2',
-          'ring-pink-200',
+          'bg-white',
+          'text-pink-600',
           'border-2',
-          'border-pink-500',
-          'border-dashed'
+          'border-pink-400',
+          'border-dashed',
+          'shadow-sm',
+          'hover:bg-pink-50'
         );
       }
       // Regular day
       else {
         classes.push(
-          'text-gray-800',
+          'text-gray-700',
           'bg-white',
-          'hover:bg-gray-100',
-          'hover:shadow-md'
+          'border',
+          'border-gray-200',
+          'hover:bg-gray-50',
+          'hover:border-gray-300'
         );
       }
 
       // Special styling for today (overlay effect)
-      if (day.isToday && !day.isPeriodDay) {
-        classes.push('ring-2', 'ring-blue-500', 'ring-inset');
+      if (day.isToday) {
+        classes.push('ring-2', 'ring-blue-400', 'ring-inset', 'font-bold');
       }
     }
 

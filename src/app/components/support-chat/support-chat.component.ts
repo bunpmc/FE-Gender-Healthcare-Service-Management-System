@@ -82,7 +82,7 @@ export class SupportChatComponent implements AfterViewChecked, OnDestroy {
   private shouldScrollToBottom = false;
   private messageIdCounter = 0;
   private readonly N8N_WEBHOOK_URL =
-    'https://buishere.app.n8n.cloud/webhook/chatbot';
+    'https://khanhnqse.app.n8n.cloud/webhook/chatbot';
 
   constructor(
     private http: HttpClient,
